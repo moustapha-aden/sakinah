@@ -6,19 +6,26 @@ import {
   TouchableOpacity,
   Pressable,
 } from "react-native";
-import { useState } from "react";
-import { Stack, router, useNavigation } from "expo-router";
+import { useState, useMemo } from "react";
+import { Stack, router, useNavigation, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useLayoutEffect } from "react";
+import { useLayoutEffect, useCallback } from "react";
 
 import AppButton from "../components/AppButton";
 import { useTheme } from "../contexts/ThemeContext";
+import { useTranslation } from "../contexts/TranslationContext";
+import { useSettings } from "../hooks/useSettings";
+import { getTextSize } from "../utils/textSize";
 
 export default function HomeScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
+  const { settings } = useSettings();
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
-  const styles = createStyles(colors);
+  
+  // Recréer les styles quand textSize change
+  const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -53,7 +60,7 @@ export default function HomeScreen() {
           >
             <View style={styles.menuContainer}>
               <View style={styles.menuHeader}>
-                <Text style={styles.menuTitle}>Menu</Text>
+                <Text style={styles.menuTitle}>{t("menu.title")}</Text>
                 <TouchableOpacity onPress={() => setMenuVisible(false)}>
                   <Ionicons
                     name="close"
@@ -68,7 +75,7 @@ export default function HomeScreen() {
                 onPress={() => handleMenuAction("favorites")}
               >
                 <Ionicons name="star" size={22} color={colors.accent} />
-                <Text style={styles.menuItemText}>Favoris</Text>
+                <Text style={styles.menuItemText}>{t("menu.favorites")}</Text>
               </Pressable>
 
               <Pressable
@@ -76,23 +83,23 @@ export default function HomeScreen() {
                 onPress={() => handleMenuAction("settings")}
               >
                 <Ionicons name="settings" size={22} color={colors.accent} />
-                <Text style={styles.menuItemText}>Paramètres</Text>
+                <Text style={styles.menuItemText}>{t("menu.settings")}</Text>
               </Pressable>
             </View>
           </TouchableOpacity>
         </Modal>
 
         {/* CONTENT */}
-        <Text style={styles.title}>🕊️ Sakīnah</Text>
+        <Text style={styles.title}>🕊️ {t("home.title")}</Text>
 
-        <AppButton title="📿 Adkâr" onPress={() => router.push("/adkar")} />
-        <AppButton title="🤲 Duʿāʾ" onPress={() => router.push("/dua")} />
-        <AppButton title="🔢 Compteur" onPress={() => router.push("/counter")} />
+        <AppButton title={t("home.adkar")} onPress={() => router.push("/adkar")} />
+        <AppButton title={t("home.dua")} onPress={() => router.push("/dua")} />
+        <AppButton title={t("home.counter")} onPress={() => router.push("/counter")} />
       </View>
   );
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
+const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -102,7 +109,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
 
   title: {
-    fontSize: 28,
+    fontSize: getTextSize(28, textSize),
     textAlign: "center",
     color: colors.textPrimary,
     marginBottom: 24,
@@ -131,7 +138,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
 
   menuTitle: {
-    fontSize: 18,
+    fontSize: getTextSize(18, textSize),
     fontWeight: "600",
     color: colors.textPrimary,
   },
@@ -144,7 +151,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
 
   menuItemText: {
-    fontSize: 16,
+    fontSize: getTextSize(16, textSize),
     color: colors.textPrimary,
   },
 });

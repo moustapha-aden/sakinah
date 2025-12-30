@@ -6,10 +6,13 @@ import {
   Pressable,
   TouchableOpacity,
 } from "react-native";
+import { useMemo } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useTranslation } from "../../contexts/TranslationContext";
 import { useSettings, TextSize } from "../../hooks/useSettings";
+import { getTextSize, getLineHeight } from "../../utils/textSize";
 
 const textSizes: { value: TextSize; label: string; description: string; size: number }[] = [
   { value: "small", label: "Petite", description: "Facile à lire", size: 14 },
@@ -19,8 +22,9 @@ const textSizes: { value: TextSize; label: string; description: string; size: nu
 
 export default function TextSizeScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const { settings, setTextSize } = useSettings();
-  const styles = createStyles(colors);
+  const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
 
   return (
     <ScrollView style={styles.container}>
@@ -29,14 +33,14 @@ export default function TextSizeScreen() {
           <View style={styles.iconContainer}>
             <Ionicons name="text" size={32} color={colors.accent} />
           </View>
-          <Text style={styles.title}>Taille du texte</Text>
+          <Text style={styles.title}>{t("textSize.title")}</Text>
           <Text style={styles.subtitle}>
-            Ajustez la taille du texte selon vos préférences
+            {t("textSize.subtitle")}
           </Text>
         </View>
 
         <View style={styles.previewContainer}>
-          <Text style={styles.previewLabel}>Aperçu</Text>
+          <Text style={styles.previewLabel}>{t("textSize.preview")}</Text>
           <View style={styles.previewCard}>
             <Text
               style={[
@@ -97,7 +101,7 @@ export default function TextSizeScreen() {
             onPress={() => router.back()}
           >
             <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
-            <Text style={styles.backButtonText}> Retour</Text>
+            <Text style={styles.backButtonText}> {t("textSize.back")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -105,7 +109,7 @@ export default function TextSizeScreen() {
   );
 }
 
-const createStyles = (colors: any) =>
+const createStyles = (colors: any, textSize: any) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -161,7 +165,7 @@ const createStyles = (colors: any) =>
     previewText: {
       color: colors.textPrimary,
       textAlign: "center",
-      lineHeight: 24,
+      lineHeight: getLineHeight(getTextSize(16, textSize)),
     },
     optionsContainer: {
       backgroundColor: colors.card,
@@ -185,13 +189,13 @@ const createStyles = (colors: any) =>
       flex: 1,
     },
     optionLabel: {
-      fontSize: 18,
+      fontSize: getTextSize(18, textSize),
       fontWeight: "600",
       color: colors.textPrimary,
       marginBottom: 4,
     },
     optionDescription: {
-      fontSize: 14,
+      fontSize: getTextSize(14, textSize),
       color: colors.textSecondary,
     },
     optionRight: {
@@ -219,7 +223,7 @@ const createStyles = (colors: any) =>
       borderColor: colors.border,
     },
     backButtonText: {
-      fontSize: 16,
+      fontSize: getTextSize(16, textSize),
       fontWeight: "600",
       color: colors.textPrimary,
     },

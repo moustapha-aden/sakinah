@@ -6,10 +6,13 @@ import {
   Pressable,
   TouchableOpacity,
 } from "react-native";
+import { useMemo } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useTranslation } from "../../contexts/TranslationContext";
 import { useSettings, Language } from "../../hooks/useSettings";
+import { getTextSize } from "../../utils/textSize";
 
 const languages: { code: Language; name: string; nativeName: string }[] = [
   { code: "fr", name: "Français", nativeName: "Français" },
@@ -19,8 +22,9 @@ const languages: { code: Language; name: string; nativeName: string }[] = [
 
 export default function LanguageScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const { settings, setLanguage } = useSettings();
-  const styles = createStyles(colors);
+  const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
 
   return (
     <ScrollView style={styles.container}>
@@ -29,9 +33,9 @@ export default function LanguageScreen() {
           <View style={styles.iconContainer}>
             <Ionicons name="language" size={32} color={colors.accent} />
           </View>
-          <Text style={styles.title}>Langue</Text>
+          <Text style={styles.title}>{t("language.title")}</Text>
           <Text style={styles.subtitle}>
-            Choisissez votre langue préférée
+            {t("language.subtitle")}
           </Text>
         </View>
 
@@ -65,7 +69,7 @@ export default function LanguageScreen() {
             onPress={() => router.back()}
           >
             <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
-            <Text style={styles.backButtonText}> Retour</Text>
+            <Text style={styles.backButtonText}> {t("language.back")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -73,7 +77,7 @@ export default function LanguageScreen() {
   );
 }
 
-const createStyles = (colors: any) =>
+const createStyles = (colors: any, textSize: any) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -99,13 +103,13 @@ const createStyles = (colors: any) =>
       borderColor: colors.accent,
     },
     title: {
-      fontSize: 28,
+      fontSize: getTextSize(28, textSize),
       fontWeight: "700",
       color: colors.textPrimary,
       marginBottom: 8,
     },
     subtitle: {
-      fontSize: 16,
+      fontSize: getTextSize(16, textSize),
       color: colors.textSecondary,
       textAlign: "center",
     },
@@ -131,13 +135,13 @@ const createStyles = (colors: any) =>
       flex: 1,
     },
     optionNativeName: {
-      fontSize: 24,
+      fontSize: getTextSize(24, textSize),
       fontWeight: "600",
       color: colors.textPrimary,
       marginBottom: 4,
     },
     optionName: {
-      fontSize: 14,
+      fontSize: getTextSize(14, textSize),
       color: colors.textSecondary,
     },
     buttonContainer: {
@@ -156,7 +160,7 @@ const createStyles = (colors: any) =>
       borderColor: colors.border,
     },
     backButtonText: {
-      fontSize: 16,
+      fontSize: getTextSize(16, textSize),
       fontWeight: "600",
       color: colors.textPrimary,
     },

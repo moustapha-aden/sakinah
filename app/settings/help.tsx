@@ -6,13 +6,19 @@ import {
   TouchableOpacity,
   Linking,
 } from "react-native";
+import { useMemo } from "react";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useTranslation } from "../../contexts/TranslationContext";
+import { useSettings } from "../../hooks/useSettings";
+import { getTextSize, getLineHeight } from "../../utils/textSize";
 
 export default function HelpScreen() {
   const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { t } = useTranslation();
+  const { settings } = useSettings();
+  const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
 
   const faqItems = [
     {
@@ -118,7 +124,7 @@ export default function HelpScreen() {
   );
 }
 
-const createStyles = (colors: any) =>
+const createStyles = (colors: any, textSize: any) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -181,14 +187,14 @@ const createStyles = (colors: any) =>
     },
     faqQuestionText: {
       flex: 1,
-      fontSize: 16,
+      fontSize: getTextSize(16, textSize),
       fontWeight: "600",
       color: colors.textPrimary,
     },
     faqAnswer: {
-      fontSize: 14,
+      fontSize: getTextSize(14, textSize),
       color: colors.textSecondary,
-      lineHeight: 20,
+      lineHeight: getLineHeight(getTextSize(14, textSize)),
       marginLeft: 28,
     },
     contactCard: {
@@ -199,9 +205,9 @@ const createStyles = (colors: any) =>
       borderColor: colors.border,
     },
     contactText: {
-      fontSize: 14,
+      fontSize: getTextSize(14, textSize),
       color: colors.textSecondary,
-      lineHeight: 20,
+      lineHeight: getLineHeight(getTextSize(14, textSize)),
       marginBottom: 16,
     },
     contactButton: {
@@ -216,7 +222,7 @@ const createStyles = (colors: any) =>
       gap: 8,
     },
     contactButtonText: {
-      fontSize: 16,
+      fontSize: getTextSize(16, textSize),
       fontWeight: "600",
       color: colors.textPrimary,
     },
@@ -228,9 +234,9 @@ const createStyles = (colors: any) =>
       borderColor: colors.border,
     },
     aboutText: {
-      fontSize: 14,
+      fontSize: getTextSize(14, textSize),
       color: colors.textSecondary,
-      lineHeight: 20,
+      lineHeight: getLineHeight(getTextSize(14, textSize)),
       marginBottom: 16,
     },
     aboutBold: {
@@ -238,7 +244,7 @@ const createStyles = (colors: any) =>
       color: colors.textPrimary,
     },
     versionText: {
-      fontSize: 12,
+      fontSize: getTextSize(12, textSize),
       color: colors.textSecondary,
       fontStyle: "italic",
     },
@@ -258,7 +264,7 @@ const createStyles = (colors: any) =>
       borderColor: colors.border,
     },
     backButtonText: {
-      fontSize: 16,
+      fontSize: getTextSize(16, textSize),
       fontWeight: "600",
       color: colors.textPrimary,
     },

@@ -6,10 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import { useState, useRef, useLayoutEffect } from "react";
+import { useState, useRef, useLayoutEffect, useMemo } from "react";
 import { useLocalSearchParams, router, useNavigation } from "expo-router";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useTranslation } from "../../contexts/TranslationContext";
+import { useSettings } from "../../hooks/useSettings";
+import { getTextSize, getLineHeight } from "../../utils/textSize";
 import { adkar } from "../../data/adkar";
 import { adkarCategories } from "../../data/categories";
 
@@ -17,12 +20,14 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function AdkarCategoryScreen() {
   const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { t } = useTranslation();
+  const { settings } = useSettings();
+  const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
   const { category } = useLocalSearchParams<{ category: string }>();
   const navigation = useNavigation();
   const categoryAdkar = adkar.filter((item) => item.category === category);
   const categoryTitle =
-    adkarCategories.find((cat) => cat.id === category)?.title || "Adkâr";
+    adkarCategories.find((cat) => cat.id === category)?.title || t("adkar.title");
 
   // Définir le titre du header dynamiquement
   useLayoutEffect(() => {
@@ -66,17 +71,16 @@ export default function AdkarCategoryScreen() {
       <View style={styles.container}>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>📿</Text>
-          <Text style={styles.emptyTitle}>Aucun adkâr disponible</Text>
-          <Text style={styles.emptyText}>
-            Cette catégorie est vide. Vous pouvez ajouter des adkâr dans le
-            fichier data/adkar.ts
-          </Text>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonText}>Retour</Text>
-          </TouchableOpacity>
+                <Text style={styles.emptyTitle}>{t("adkar.empty")}</Text>
+                <Text style={styles.emptyText}>
+                  {t("adkar.emptyText")}
+                </Text>
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={() => router.back()}
+                >
+                  <Text style={styles.backButtonText}>{t("adkar.back")}</Text>
+                </TouchableOpacity>
         </View>
       </View>
     );
@@ -137,7 +141,7 @@ export default function AdkarCategoryScreen() {
                 size={18}
                 color={colors.textPrimary}
               />
-              <Text style={styles.navButton}> Précédent</Text>
+                  <Text style={styles.navButton}> {t("adkar.previous")}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
@@ -148,7 +152,7 @@ export default function AdkarCategoryScreen() {
               onPress={goToNext}
               disabled={currentIndex === categoryAdkar.length - 1}
             >
-              <Text style={styles.navButton}>Suivant </Text>
+                  <Text style={styles.navButton}>{t("adkar.next")} </Text>
               <Ionicons
                 name="chevron-forward"
                 size={18}
@@ -161,7 +165,7 @@ export default function AdkarCategoryScreen() {
   );
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
+const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   container: {
     marginTop: 40,
     flex: 1,
@@ -211,7 +215,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     elevation: 3,
   },
   categoryTitle: {
-    fontSize: 12,
+    fontSize: getTextSize(12, textSize),
     color: colors.accent,
     fontWeight: "600",
     textTransform: "uppercase",
@@ -219,23 +223,23 @@ const createStyles = (colors: any) => StyleSheet.create({
     marginBottom: 4,
   },
   arabicText: {
-    fontSize: 28,
+    fontSize: getTextSize(28, textSize),
     color: colors.textPrimary,
     textAlign: "right",
     fontFamily: "System",
-    lineHeight: 42,
+    lineHeight: getLineHeight(getTextSize(28, textSize)),
     fontWeight: "500",
     width: "100%",
   },
   translationText: {
-    fontSize: 16,
+    fontSize: getTextSize(16, textSize),
     color: colors.textSecondary,
     textAlign: "center",
-    lineHeight: 24,
+    lineHeight: getLineHeight(getTextSize(16, textSize)),
     width: "100%",
   },
   repeatText: {
-    fontSize: 14,
+    fontSize: getTextSize(14, textSize),
     color: colors.accent,
     fontWeight: "600",
     marginTop: 4,
@@ -250,7 +254,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     alignItems: "center",
   },
   paginationText: {
-    fontSize: 14,
+    fontSize: getTextSize(14, textSize),
     color: colors.textSecondary,
     fontWeight: "500",
   },
@@ -272,7 +276,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     justifyContent: "center",
   },
   navButton: {
-    fontSize: 14,
+    fontSize: getTextSize(14, textSize),
     color: colors.textPrimary,
     fontWeight: "500",
   },
@@ -291,15 +295,15 @@ const createStyles = (colors: any) => StyleSheet.create({
     marginBottom: 16,
   },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: getTextSize(20, textSize),
     color: colors.textPrimary,
     fontWeight: "600",
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: getTextSize(16, textSize),
     color: colors.textSecondary,
     textAlign: "center",
-    lineHeight: 24,
+    lineHeight: getLineHeight(getTextSize(16, textSize)),
   },
   backButton: {
     marginTop: 16,
@@ -311,7 +315,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     borderColor: colors.border,
   },
   backButtonText: {
-    fontSize: 16,
+    fontSize: getTextSize(16, textSize),
     color: colors.textPrimary,
     fontWeight: "500",
   },

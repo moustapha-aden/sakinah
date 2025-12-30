@@ -13,6 +13,9 @@ import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useState, useRef, useMemo, useLayoutEffect, useEffect } from "react";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useTranslation } from "../../contexts/TranslationContext";
+import { useSettings } from "../../hooks/useSettings";
+import { getTextSize, getLineHeight } from "../../utils/textSize";
 import { duas } from "../../data/dua";
 import { useFavorites } from "../../hooks/useFavorites";
 
@@ -64,12 +67,15 @@ const getCategoryIcon = (category: string) => {
 
 export default function DuaScreen() {
   const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { settings } = useSettings();
+  const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
   
   return <DuaScreenContent styles={styles} colors={colors} />;
 }
 
 function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
+  const { t } = useTranslation();
+  const { settings } = useSettings();
   const navigation = useNavigation();
   const params = useLocalSearchParams<{ duaId?: string }>();
   const [searchQuery, setSearchQuery] = useState("");
@@ -173,7 +179,7 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
           >
             <View style={styles.menuContainer}>
               <View style={styles.menuHeader}>
-                <Text style={styles.menuTitle}>Menu</Text>
+                <Text style={styles.menuTitle}>{t("menu.title")}</Text>
                 <TouchableOpacity
                   onPress={() => setMenuVisible(false)}
                   style={styles.closeButton}
@@ -194,9 +200,9 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
                       style={styles.menuItemIcon}
                     />
                     <View style={styles.menuItemText}>
-                      <Text style={styles.menuItemTitle}>Favoris</Text>
+                      <Text style={styles.menuItemTitle}>{t("menu.favorites")}</Text>
                       <Text style={styles.menuItemSubtitle}>
-                        Mes invocations favorites
+                        {t("menu.favoritesSubtitle")}
                       </Text>
                     </View>
                     <Ionicons
@@ -218,9 +224,9 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
                       style={styles.menuItemIcon}
                     />
                     <View style={styles.menuItemText}>
-                      <Text style={styles.menuItemTitle}>Paramètres</Text>
+                      <Text style={styles.menuItemTitle}>{t("menu.settings")}</Text>
                       <Text style={styles.menuItemSubtitle}>
-                        Préférences et configuration
+                        {t("menu.settingsSubtitle")}
                       </Text>
                     </View>
                     <Ionicons
@@ -311,7 +317,7 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
             onPress={handleBackToList}
           >
             <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
-            <Text style={styles.backToListText}> Retour à la liste</Text>
+            <Text style={styles.backToListText}> {t("dua.backToList")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -406,7 +412,7 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
           />
           <TextInput
             style={styles.searchInput}
-            placeholder="Rechercher une invocation..."
+            placeholder={t("dua.search")}
             placeholderTextColor={colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -430,7 +436,7 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
         {filteredDuas.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
-              Aucune invocation trouvée pour "{searchQuery}"
+              {t("dua.empty")} "{searchQuery}"
             </Text>
           </View>
         ) : (
@@ -478,7 +484,7 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
   );
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
+const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   container: {
     marginTop: 40,
     flex: 1,
@@ -547,13 +553,13 @@ const createStyles = (colors: any) => StyleSheet.create({
     flex: 1,
   },
   duaItemTitle: {
-    fontSize: 16,
+    fontSize: getTextSize(16, textSize),
     color: colors.textPrimary,
     fontWeight: "600",
     marginBottom: 4,
   },
   duaItemSource: {
-    fontSize: 12,
+    fontSize: getTextSize(12, textSize),
     color: colors.textSecondary,
     fontStyle: "italic",
   },
@@ -601,7 +607,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     borderColor: colors.accent,
   },
   duaTitle: {
-    fontSize: 24,
+    fontSize: getTextSize(24, textSize),
     color: colors.textPrimary,
     fontWeight: "700",
     textAlign: "center",
@@ -613,21 +619,21 @@ const createStyles = (colors: any) => StyleSheet.create({
     borderBottomColor: colors.border,
   },
   arabicText: {
-    fontSize: 32,
+    fontSize: getTextSize(32, textSize),
     color: colors.textPrimary,
     textAlign: "right",
     fontFamily: "System",
-    lineHeight: 48,
+    lineHeight: getLineHeight(getTextSize(32, textSize)),
     fontWeight: "500",
   },
   translationContainer: {
     marginBottom: 20,
   },
   translationText: {
-    fontSize: 18,
+    fontSize: getTextSize(18, textSize),
     color: colors.textSecondary,
     textAlign: "left",
-    lineHeight: 28,
+    lineHeight: getLineHeight(getTextSize(18, textSize)),
   },
   sourceContainer: {
     flexDirection: "row",
@@ -689,7 +695,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     borderColor: colors.border,
   },
   backToListText: {
-    fontSize: 14,
+    fontSize: getTextSize(14, textSize),
     color: colors.textPrimary,
     fontWeight: "600",
   },
@@ -700,7 +706,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     padding: 32,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: getTextSize(16, textSize),
     color: colors.textSecondary,
     textAlign: "center",
   },
@@ -744,7 +750,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     borderBottomColor: colors.border,
   },
   menuTitle: {
-    fontSize: 24,
+    fontSize: getTextSize(24, textSize),
     fontWeight: "700",
     color: colors.textPrimary,
   },
@@ -771,13 +777,13 @@ const createStyles = (colors: any) => StyleSheet.create({
     flex: 1,
   },
   menuItemTitle: {
-    fontSize: 18,
+    fontSize: getTextSize(18, textSize),
     fontWeight: "600",
     color: colors.textPrimary,
     marginBottom: 4,
   },
   menuItemSubtitle: {
-    fontSize: 14,
+    fontSize: getTextSize(14, textSize),
     color: colors.textSecondary,
   },
 });

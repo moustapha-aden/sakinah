@@ -1,9 +1,25 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useLayoutEffect } from "react";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
+import { SettingsProvider } from "../contexts/SettingsContext";
+import { TranslationProvider, useTranslation } from "../contexts/TranslationContext";
+import { useNavigation } from "expo-router";
 
 function RootLayoutNav() {
   const { colors, theme } = useTheme();
+  const { t, language } = useTranslation();
+  const navigation = useNavigation();
+
+  // Mettre à jour les titres des écrans quand la langue change
+  useLayoutEffect(() => {
+    // Mettre à jour les options de navigation pour forcer le re-render
+    navigation.setOptions({
+      headerStyle: { backgroundColor: colors.primary },
+      headerTintColor: colors.textPrimary,
+      headerTitleAlign: "center",
+    });
+  }, [navigation, colors, language, t]);
 
   return (
     <>
@@ -15,16 +31,22 @@ function RootLayoutNav() {
           headerTitleAlign: "center",
         }}
       >
-        <Stack.Screen name="index" options={{ title: "Sakīnah" }} />
-        <Stack.Screen name="adkar/index" options={{ title: "Adkâr" }} />
-        <Stack.Screen name="dua/index" options={{ title: "Duʿāʾ" }} />
-        <Stack.Screen name="settings/favorites" options={{ title: "Favoris" }} />
-        <Stack.Screen name="dua/onboarding" options={{ title: "Bienvenue" }} />
-        <Stack.Screen name="settings/settings" options={{ title: "Paramètres" }} />
-        <Stack.Screen name="settings/language" options={{ title: "Langue" }} />
-        <Stack.Screen name="settings/textSize" options={{ title: "Taille du texte" }} />
-        <Stack.Screen name="settings/help" options={{ title: "Aide" }} />
-        <Stack.Screen name="counter" options={{ title: "Tasbih" }} />
+        <Stack.Screen 
+          name="index" 
+          options={{ 
+            title: t("home.title"),
+            headerRight: undefined, // Sera défini dans le composant
+          }} 
+        />
+        <Stack.Screen name="adkar/index" options={{ title: t("adkar.title") }} />
+        <Stack.Screen name="dua/index" options={{ title: t("dua.title") }} />
+        <Stack.Screen name="settings/favorites" options={{ title: t("favorites.title") }} />
+        <Stack.Screen name="dua/onboarding" options={{ title: t("onboarding.title") }} />
+        <Stack.Screen name="settings/settings" options={{ title: t("settings.title") }} />
+        <Stack.Screen name="settings/language" options={{ title: t("language.title") }} />
+        <Stack.Screen name="settings/textSize" options={{ title: t("textSize.title") }} />
+        <Stack.Screen name="settings/help" options={{ title: t("help.title") }} />
+        <Stack.Screen name="counter" options={{ title: t("counter.title") }} />
       </Stack>
     </>
   );
@@ -33,7 +55,11 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <RootLayoutNav />
+      <SettingsProvider>
+        <TranslationProvider>
+          <RootLayoutNav />
+        </TranslationProvider>
+      </SettingsProvider>
     </ThemeProvider>
   );
 }

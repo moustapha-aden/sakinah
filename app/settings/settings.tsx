@@ -7,16 +7,20 @@ import {
   TouchableOpacity,
   Pressable,
 } from "react-native";
+import { useEffect, useMemo } from "react";
 import { router } from "expo-router";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useTranslation } from "../../contexts/TranslationContext";
 import { useSettings } from "../../hooks/useSettings";
+import { getTextSize } from "../../utils/textSize";
 
 export default function SettingsScreen() {
   const { colors, theme, themeMode, setThemeMode } = useTheme();
+  const { t } = useTranslation();
   const { settings, setNotifications, setLanguage, setTextSize } = useSettings();
 
-  const styles = createStyles(colors);
+  const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
 
   const getLanguageName = (code: string) => {
     const languages: { [key: string]: string } = {
@@ -35,7 +39,9 @@ export default function SettingsScreen() {
     };
     return sizes[size] || size;
   };
-
+useEffect(() => {
+    // Any side effects based on settings can be handled here
+  }, [settings]);
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
@@ -51,7 +57,7 @@ export default function SettingsScreen() {
 
         {/* Section Apparence */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Apparence</Text>
+          <Text style={styles.sectionTitle}>{t("settings.appearance")}</Text>
           <View style={styles.optionsContainer}>
             <View style={styles.optionItem}>
               <View style={styles.optionLeft}>
@@ -62,13 +68,13 @@ export default function SettingsScreen() {
                   style={styles.optionIcon}
                 />
                 <View style={styles.optionText}>
-                  <Text style={styles.optionLabel}>Mode sombre</Text>
+                  <Text style={styles.optionLabel}>{t("settings.darkMode")}</Text>
                   <Text style={styles.optionDescription}>
                     {themeMode === "auto"
-                      ? "Automatique (suit le système)"
+                      ? t("settings.darkModeDesc")
                       : themeMode === "dark"
-                      ? "Activé"
-                      : "Désactivé"}
+                      ? t("settings.darkModeEnabled")
+                      : t("settings.darkModeDisabled")}
                   </Text>
                 </View>
               </View>
@@ -95,15 +101,15 @@ export default function SettingsScreen() {
                   style={styles.optionIcon}
                 />
                 <View style={styles.optionText}>
-                  <Text style={styles.optionLabel}>Mode automatique</Text>
+                  <Text style={styles.optionLabel}>{t("settings.autoMode")}</Text>
                   <Text style={styles.optionDescription}>
-                    Suivre les paramètres du système
+                    {t("settings.autoModeDesc")}
                   </Text>
                 </View>
               </View>
               <View style={styles.optionRight}>
                 <Text style={styles.optionValue}>
-                  {themeMode === "auto" ? "Activé" : "Désactivé"}
+                  {themeMode === "auto" ? t("settings.autoModeEnabled") : t("settings.autoModeDisabled")}
                 </Text>
                 <Ionicons
                   name="chevron-forward"
@@ -117,7 +123,7 @@ export default function SettingsScreen() {
 
         {/* Section Préférences */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Préférences</Text>
+          <Text style={styles.sectionTitle}>{t("settings.preferences")}</Text>
           <View style={styles.optionsContainer}>
             <View style={styles.optionItem}>
               <View style={styles.optionLeft}>
@@ -128,9 +134,9 @@ export default function SettingsScreen() {
                   style={styles.optionIcon}
                 />
                 <View style={styles.optionText}>
-                  <Text style={styles.optionLabel}>Notifications</Text>
+                  <Text style={styles.optionLabel}>{t("settings.notifications")}</Text>
                   <Text style={styles.optionDescription}>
-                    Recevoir des rappels pour les invocations
+                    {t("settings.notificationsDesc")}
                   </Text>
                 </View>
               </View>
@@ -154,7 +160,7 @@ export default function SettingsScreen() {
                   style={styles.optionIcon}
                 />
                 <View style={styles.optionText}>
-                  <Text style={styles.optionLabel}>Langue</Text>
+                  <Text style={styles.optionLabel}>{t("settings.language")}</Text>
                   <Text style={styles.optionDescription}>
                     {getLanguageName(settings.language)}
                   </Text>
@@ -184,7 +190,7 @@ export default function SettingsScreen() {
                   style={styles.optionIcon}
                 />
                 <View style={styles.optionText}>
-                  <Text style={styles.optionLabel}>Taille du texte</Text>
+                  <Text style={styles.optionLabel}>{t("settings.textSize")}</Text>
                   <Text style={styles.optionDescription}>
                     {getTextSizeName(settings.textSize)}
                   </Text>
@@ -206,14 +212,14 @@ export default function SettingsScreen() {
 
         {/* Section À propos */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>À propos</Text>
+          <Text style={styles.sectionTitle}>{t("settings.about")}</Text>
           <View style={styles.infoContainer}>
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Version</Text>
+              <Text style={styles.infoLabel}>{t("settings.version")}</Text>
               <Text style={styles.infoValue}>1.0.0</Text>
             </View>
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Dernière mise à jour</Text>
+              <Text style={styles.infoLabel}>{t("settings.lastUpdate")}</Text>
               <Text style={styles.infoValue}>
                 {new Date().toLocaleDateString("fr-FR")}
               </Text>
@@ -223,7 +229,7 @@ export default function SettingsScreen() {
 
         {/* Section Support */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support</Text>
+          <Text style={styles.sectionTitle}>{t("settings.support")}</Text>
           <View style={styles.optionsContainer}>
             <Pressable
               style={styles.optionItem}
@@ -237,9 +243,9 @@ export default function SettingsScreen() {
                   style={styles.optionIcon}
                 />
                 <View style={styles.optionText}>
-                  <Text style={styles.optionLabel}>Aide</Text>
+                  <Text style={styles.optionLabel}>{t("settings.help")}</Text>
                   <Text style={styles.optionDescription}>
-                    Questions fréquentes et support
+                    {t("settings.helpDesc")}
                   </Text>
                 </View>
               </View>
@@ -258,7 +264,7 @@ export default function SettingsScreen() {
             onPress={() => router.back()}
           >
             <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
-            <Text style={styles.backButtonText}> Retour</Text>
+            <Text style={styles.backButtonText}> {t("settings.back")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -266,7 +272,7 @@ export default function SettingsScreen() {
   );
 }
 
-const createStyles = (colors: any) =>
+const createStyles = (colors: any, textSize: any) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -338,13 +344,13 @@ const createStyles = (colors: any) =>
       flex: 1,
     },
     optionLabel: {
-      fontSize: 16,
+      fontSize: getTextSize(16, textSize),
       fontWeight: "600",
       color: colors.textPrimary,
       marginBottom: 4,
     },
     optionDescription: {
-      fontSize: 14,
+      fontSize: getTextSize(14, textSize),
       color: colors.textSecondary,
     },
     optionRight: {
@@ -353,7 +359,7 @@ const createStyles = (colors: any) =>
       gap: 8,
     },
     optionValue: {
-      fontSize: 14,
+      fontSize: getTextSize(14, textSize),
       color: colors.textSecondary,
     },
     infoContainer: {
@@ -372,11 +378,11 @@ const createStyles = (colors: any) =>
       borderBottomColor: colors.border,
     },
     infoLabel: {
-      fontSize: 16,
+      fontSize: getTextSize(16, textSize),
       color: colors.textPrimary,
     },
     infoValue: {
-      fontSize: 14,
+      fontSize: getTextSize(14, textSize),
       color: colors.textSecondary,
       fontWeight: "500",
     },
@@ -396,7 +402,7 @@ const createStyles = (colors: any) =>
       borderColor: colors.border,
     },
     backButtonText: {
-      fontSize: 16,
+      fontSize: getTextSize(16, textSize),
       fontWeight: "600",
       color: colors.textPrimary,
     },

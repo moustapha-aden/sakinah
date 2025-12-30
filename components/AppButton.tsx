@@ -1,5 +1,8 @@
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
+import { useMemo } from "react";
 import { useTheme } from "../contexts/ThemeContext";
+import { useSettings } from "../hooks/useSettings";
+import { getTextSize } from "../utils/textSize";
 
 type Props = {
   title: string;
@@ -8,7 +11,8 @@ type Props = {
 
 export default function AppButton({ title, onPress }: Props) {
   const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { settings } = useSettings();
+  const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
 
   return (
     <TouchableOpacity style={styles.button} onPress={onPress}>
@@ -17,7 +21,7 @@ export default function AppButton({ title, onPress }: Props) {
   );
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
+const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   button: {
     backgroundColor: colors.card,
     padding: 16,
@@ -34,7 +38,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     elevation: 3,
   },
   text: {
-    fontSize: 18,
+    fontSize: getTextSize(18, textSize),
     textAlign: "center",
     color: colors.textPrimary,
     fontWeight: "600",

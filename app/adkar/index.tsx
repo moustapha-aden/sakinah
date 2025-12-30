@@ -1,11 +1,17 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { router } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useMemo } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useTranslation } from "../../contexts/TranslationContext";
+import { useSettings } from "../../hooks/useSettings";
+import { getTextSize } from "../../utils/textSize";
 
 export default function AdkarScreen() {
   const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { t } = useTranslation();
+  const { settings } = useSettings();
+  const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
 
   const handleCategoryPress = (categoryId: string) => {
     router.push(`/adkar/${categoryId}`);
@@ -14,8 +20,8 @@ export default function AdkarScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>📿 Adkâr</Text>
-        <Text style={styles.subtitle}>Sélectionnez une catégorie</Text>
+        <Text style={styles.title}>📿 {t("adkar.title")}</Text>
+        <Text style={styles.subtitle}>{t("adkar.subtitle")}</Text>
 
         <View style={styles.categoriesContainer}>
           <Pressable
@@ -32,10 +38,10 @@ export default function AdkarScreen() {
                 color={colors.accent}
                 style={styles.cardIcon}
               />
-              <View style={styles.cardText}>
-                <Text style={styles.nom_en_Arabe}>أدكار الصباح</Text>
-                <Text style={styles.nom_en_francais}>Adkâr du matin</Text>
-              </View>
+                    <View style={styles.cardText}>
+                      <Text style={styles.nom_en_Arabe}>{t("adkar.morning")}</Text>
+                      <Text style={styles.nom_en_francais}>{t("adkar.morningFr")}</Text>
+                    </View>
               <MaterialIcons
                 name="chevron-right"
                 size={24}
@@ -58,10 +64,10 @@ export default function AdkarScreen() {
                 color={colors.accent}
                 style={styles.cardIcon}
               />
-              <View style={styles.cardText}>
-                <Text style={styles.nom_en_Arabe}>أدكار المساء</Text>
-                <Text style={styles.nom_en_francais}>Adkâr du soir</Text>
-              </View>
+                    <View style={styles.cardText}>
+                      <Text style={styles.nom_en_Arabe}>{t("adkar.evening")}</Text>
+                      <Text style={styles.nom_en_francais}>{t("adkar.eveningFr")}</Text>
+                    </View>
               <MaterialIcons
                 name="chevron-right"
                 size={24}
@@ -84,10 +90,10 @@ export default function AdkarScreen() {
                 color={colors.accent}
                 style={styles.cardIcon}
               />
-              <View style={styles.cardText}>
-                <Text style={styles.nom_en_Arabe}>أدكار بعد الصلاة</Text>
-                <Text style={styles.nom_en_francais}>Après la prière</Text>
-              </View>
+                    <View style={styles.cardText}>
+                      <Text style={styles.nom_en_Arabe}>{t("adkar.afterPrayer")}</Text>
+                      <Text style={styles.nom_en_francais}>{t("adkar.afterPrayerFr")}</Text>
+                    </View>
               <MaterialIcons
                 name="chevron-right"
                 size={24}
@@ -102,7 +108,7 @@ export default function AdkarScreen() {
 }
 
 
-const createStyles = (colors: any) => StyleSheet.create({
+const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   container: {
     marginTop: 40,
     flex: 1,
@@ -144,14 +150,14 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
 
   title: {
-    fontSize: 28,
+    fontSize: getTextSize(28, textSize),
     textAlign: "center",
     color: colors.textPrimary,
     marginBottom: 8,
     fontWeight: "600",
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: getTextSize(16, textSize),
     textAlign: "center",
     color: colors.textSecondary,
     marginBottom: 24,
@@ -160,12 +166,12 @@ const createStyles = (colors: any) => StyleSheet.create({
     gap: 12,
   },
   nom_en_Arabe: {
-    fontSize: 20,
+    fontSize: getTextSize(20, textSize),
     color: colors.textPrimary,
     fontWeight: "600",
   },
   nom_en_francais: {
-    fontSize: 16,
+    fontSize: getTextSize(16, textSize),
     color: colors.textSecondary,
   },
 });

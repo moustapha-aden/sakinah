@@ -1,8 +1,11 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { router, useNavigation } from "expo-router";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useTranslation } from "../../contexts/TranslationContext";
+import { useSettings } from "../../hooks/useSettings";
+import { getTextSize, getLineHeight } from "../../utils/textSize";
 import { duas } from "../../data/dua";
 import { useFavorites } from "../../hooks/useFavorites";
 
@@ -29,8 +32,10 @@ const getCategoryIcon = (category: string) => {
 
 export default function DuaFavoritesScreen() {
   const { colors } = useTheme();
-  const styles = createStyles(colors);
-  const NomHeader = "Favoris";
+  const { t } = useTranslation();
+  const { settings } = useSettings();
+  const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
+  const NomHeader = t("favorites.title");
   const navigation = useNavigation();
   
   // Définir le titre du header dynamiquement
@@ -68,17 +73,16 @@ export default function DuaFavoritesScreen() {
             <View style={styles.emptyIconContainer}>
               <Ionicons name="star-outline" size={64} color={colors.textSecondary} />
             </View>
-            <Text style={styles.emptyTitle}>Aucun favori</Text>
+            <Text style={styles.emptyTitle}>{t("favorites.empty")}</Text>
             <Text style={styles.emptyText}>
-              Les invocations que vous marquerez comme favoris apparaîtront ici.
-              Commencez à explorer et ajoutez vos invocations préférées.
+              {t("favorites.emptyText")}
             </Text>
             <Pressable
               style={styles.exploreButton}
               onPress={() => router.back()}
             >
               <Text style={styles.exploreButtonText}>
-                Parcourir les invocations
+                {t("favorites.browse")}
               </Text>
               <Ionicons
                 name="arrow-forward"
@@ -156,7 +160,7 @@ export default function DuaFavoritesScreen() {
   );
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
+const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -200,16 +204,16 @@ const createStyles = (colors: any) => StyleSheet.create({
     marginBottom: 24,
   },
   emptyTitle: {
-    fontSize: 22,
+    fontSize: getTextSize(22, textSize),
     fontWeight: "600",
     color: colors.textPrimary,
     marginBottom: 12,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: getTextSize(16, textSize),
     color: colors.textSecondary,
     textAlign: "center",
-    lineHeight: 24,
+    lineHeight: getLineHeight(getTextSize(16, textSize)),
     marginBottom: 32,
   },
   exploreButton: {
@@ -224,7 +228,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     gap: 8,
   },
   exploreButtonText: {
-    fontSize: 16,
+    fontSize: getTextSize(16, textSize),
     fontWeight: "600",
     color: colors.textPrimary,
   },
@@ -265,7 +269,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     flex: 1,
   },
   favoriteItemTitle: {
-    fontSize: 18,
+    fontSize: getTextSize(18, textSize),
     fontWeight: "600",
     color: colors.textPrimary,
     marginBottom: 4,
@@ -279,21 +283,21 @@ const createStyles = (colors: any) => StyleSheet.create({
     padding: 4,
   },
   favoriteArabic: {
-    fontSize: 22,
+    fontSize: getTextSize(22, textSize),
     color: colors.textPrimary,
     textAlign: "right",
     fontFamily: "System",
-    lineHeight: 32,
+    lineHeight: getLineHeight(getTextSize(22, textSize)),
     marginBottom: 12,
   },
   favoriteTranslation: {
-    fontSize: 16,
+    fontSize: getTextSize(16, textSize),
     color: colors.textSecondary,
-    lineHeight: 24,
+    lineHeight: getLineHeight(getTextSize(16, textSize)),
     marginBottom: 8,
   },
   favoriteSource: {
-    fontSize: 12,
+    fontSize: getTextSize(12, textSize),
     color: colors.accent,
     fontStyle: "italic",
     marginTop: 8,

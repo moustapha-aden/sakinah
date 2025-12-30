@@ -1,11 +1,17 @@
 import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { useMemo } from "react";
 import { router } from "expo-router";
 import AppButton from "../../components/AppButton";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useTranslation } from "../../contexts/TranslationContext";
+import { useSettings } from "../../hooks/useSettings";
+import { getTextSize, getLineHeight } from "../../utils/textSize";
 
 export default function DuaOnboardingScreen() {
   const { colors } = useTheme();
-  const styles = createStyles(colors);
+  const { t } = useTranslation();
+  const { settings } = useSettings();
+  const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
 
   const handleGetStarted = () => {
     router.replace("/dua");
@@ -18,36 +24,31 @@ export default function DuaOnboardingScreen() {
           <Text style={styles.icon}>🤲</Text>
         </View>
 
-        <Text style={styles.title}>Bienvenue dans Duʿāʾ</Text>
+        <Text style={styles.title}>{t("onboarding.title")}</Text>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Qu'est-ce que Duʿāʾ ?</Text>
+          <Text style={styles.sectionTitle}>{t("onboarding.whatIs")}</Text>
           <Text style={styles.sectionText}>
-            Les duʿāʾ sont des invocations et supplications que nous adressons à
-            Allah. Elles sont un moyen de communication directe avec notre
-            Créateur.
+            {t("onboarding.whatIsText")}
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Comment utiliser cette section</Text>
+          <Text style={styles.sectionTitle}>{t("onboarding.howToUse")}</Text>
           <Text style={styles.sectionText}>
-            • Parcourez les différentes catégories de duʿāʾ{"\n"}
-            • Lisez les invocations en arabe et leur traduction{"\n"}
-            • Marquez vos favorites pour y accéder rapidement{"\n"}
-            • Récitez-les avec sincérité et concentration
+            {t("onboarding.howToUseText")}
           </Text>
         </View>
 
         <View style={styles.buttonContainer}>
-          <AppButton title="Commencer" onPress={handleGetStarted} />
+          <AppButton title={t("onboarding.getStarted")} onPress={handleGetStarted} />
         </View>
       </View>
     </ScrollView>
   );
 }
 
-const createStyles = (colors: any) => StyleSheet.create({
+const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -65,7 +66,7 @@ const createStyles = (colors: any) => StyleSheet.create({
     fontSize: 80,
   },
   title: {
-    fontSize: 32,
+    fontSize: getTextSize(32, textSize),
     textAlign: "center",
     color: colors.textPrimary,
     fontWeight: "600",
@@ -75,15 +76,15 @@ const createStyles = (colors: any) => StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: getTextSize(20, textSize),
     color: colors.textPrimary,
     fontWeight: "600",
     marginBottom: 4,
   },
   sectionText: {
-    fontSize: 16,
+    fontSize: getTextSize(16, textSize),
     color: colors.textSecondary,
-    lineHeight: 24,
+    lineHeight: getLineHeight(getTextSize(16, textSize)),
   },
   buttonContainer: {
     marginTop: 16,
