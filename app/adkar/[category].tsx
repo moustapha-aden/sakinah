@@ -17,6 +17,7 @@ import { getTextSize, getLineHeight } from "../../utils/textSize";
 import { adkar } from "../../data/adkar";
 import { adkarCategories } from "../../data/categories";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { analytics } from "../../lib/firebase";
 
 const defaultStats = {
   streakDays: 0,
@@ -53,6 +54,9 @@ export default function AdkarCategoryScreen() {
     navigation.setOptions({
       title: categoryTitle,
     });
+    if (analytics && analytics.logEvent) {
+      analytics.logEvent("view_adkar_category", { category });
+    }
   }, [category, categoryTitle, navigation]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -239,6 +243,10 @@ export default function AdkarCategoryScreen() {
         // Rafraîchir les stats pour mettre à jour l'écran d'accueil
         await refreshStats();
         
+        if (analytics && analytics.logEvent) {
+          analytics.logEvent("complete_adkar", { category, count: categoryAdkar.length });
+        }
+        
         console.log(`✅ Adkâr complété manuellement: ${category} (${categoryAdkar.length} adkâr)`);
       } else {
         console.log(`⚠️ Cette catégorie a déjà été complétée aujourd'hui ou en cours d'enregistrement: ${category}`);
@@ -377,8 +385,8 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     height: "100%",
     justifyContent: "flex-start",
     alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingVertical: getResponsivePadding(16),
+    paddingHorizontal: getResponsivePadding(20),
   },
   verticalScroll: {
     flex: 1,
@@ -392,14 +400,14 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   },
   card: {
     backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: getResponsiveSize(16),
+    padding: getResponsivePadding(24),
     width: "100%",
-    maxWidth: 400,
+    maxWidth: isSmallScreen ? SCREEN_WIDTH * 0.95 : 400,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: "center",
-    gap: 20,
+    gap: getResponsiveSize(20),
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -418,11 +426,11 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     marginBottom: 4,
   },
   arabicText: {
-    fontSize: getTextSize(28, textSize),
+    fontSize: getTextSize(isSmallScreen ? 24 : 28, textSize),
     color: colors.textPrimary,
     textAlign: "right",
     fontFamily: "System",
-    lineHeight: getLineHeight(getTextSize(28, textSize)),
+    lineHeight: getLineHeight(getTextSize(isSmallScreen ? 24 : 28, textSize)),
     fontWeight: "500",
     width: "100%",
   },

@@ -8,6 +8,8 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useTranslation } from "../contexts/TranslationContext";
 import { useSettings } from "../hooks/useSettings";
 import { getTextSize, getLineHeight } from "../utils/textSize";
+import { analytics } from "../lib/firebase";
+import { getResponsiveSize, getResponsivePadding, getResponsiveMargin, isSmallScreen } from "../utils/responsive";
 
 export default function tasbihScreen() {
   const { colors } = useTheme();
@@ -15,6 +17,12 @@ export default function tasbihScreen() {
   const { settings } = useSettings();
   const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
   const { count, increment, reset } = usetasbih();
+
+  useEffect(() => {
+    if (analytics && analytics.logEvent) {
+      analytics.logEvent("open_tasbih");
+    }
+  }, []);
 
   // Animations
   const countScale = useRef(new Animated.Value(1)).current;
@@ -345,7 +353,7 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     backgroundColor: colors.background,
   },
   contentContainer: {
-    padding: 20,
+    padding: getResponsivePadding(20),
     alignItems: "center",
   },
 
@@ -388,16 +396,16 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
 
   ripple: {
     position: "absolute",
-    width: 280,
-    height: 280,
-    borderRadius: 140,
+    width: getResponsiveSize(280),
+    height: getResponsiveSize(280),
+    borderRadius: getResponsiveSize(140),
     borderWidth: 3,
   },
 
   countCircle: {
-    width: 240,
-    height: 240,
-    borderRadius: 120,
+    width: getResponsiveSize(240),
+    height: getResponsiveSize(240),
+    borderRadius: getResponsiveSize(120),
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 4,
@@ -411,7 +419,7 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   },
 
   count: {
-    fontSize: getTextSize(72, textSize),
+    fontSize: getTextSize(isSmallScreen ? 56 : 72, textSize),
     color: colors.textPrimary,
     fontWeight: "700",
   },

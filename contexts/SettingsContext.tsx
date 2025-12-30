@@ -13,7 +13,7 @@ interface Settings {
 }
 
 const defaultSettings: Settings = {
-  notifications: true,
+  notifications: false, // Désactivé par défaut
   language: "fr",
   textSize: "medium",
 };

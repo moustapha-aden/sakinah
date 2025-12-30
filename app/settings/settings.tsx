@@ -17,8 +17,8 @@ import { getTextSize } from "../../utils/textSize";
 
 export default function SettingsScreen() {
   const { colors, theme, themeMode, setThemeMode } = useTheme();
-  const { t } = useTranslation();
-  const { settings, setNotifications, setLanguage, setTextSize } = useSettings();
+  const { t, language } = useTranslation();
+  const { settings, setLanguage, setTextSize } = useSettings();
 
   const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
 
@@ -39,7 +39,9 @@ export default function SettingsScreen() {
     };
     return sizes[size] || size;
   };
-useEffect(() => {
+
+
+  useEffect(() => {
     // Any side effects based on settings can be handled here
   }, [settings]);
   return (
@@ -125,29 +127,6 @@ useEffect(() => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t("settings.preferences")}</Text>
           <View style={styles.optionsContainer}>
-            <View style={styles.optionItem}>
-              <View style={styles.optionLeft}>
-                <Ionicons
-                  name="notifications"
-                  size={24}
-                  color={colors.accent}
-                  style={styles.optionIcon}
-                />
-                <View style={styles.optionText}>
-                  <Text style={styles.optionLabel}>{t("settings.notifications")}</Text>
-                  <Text style={styles.optionDescription}>
-                    {t("settings.notificationsDesc")}
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={settings.notifications}
-                onValueChange={setNotifications}
-                trackColor={{ false: colors.border, true: colors.accent }}
-                thumbColor={colors.card}
-              />
-            </View>
-
             <Pressable
               style={styles.optionItem}
               onPress={() => router.push("/settings/language")}

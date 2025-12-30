@@ -1,11 +1,12 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { router } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useTranslation } from "../../contexts/TranslationContext";
 import { useSettings } from "../../hooks/useSettings";
 import { getTextSize } from "../../utils/textSize";
+import { analytics } from "../../lib/firebase";
 
 export default function AdkarScreen() {
   const { colors } = useTheme();
@@ -13,7 +14,16 @@ export default function AdkarScreen() {
   const { settings } = useSettings();
   const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
 
+  useEffect(() => {
+    if (analytics && analytics.logEvent) {
+      analytics.logEvent("open_adkar");
+    }
+  }, []);
+
   const handleCategoryPress = (categoryId: string) => {
+    if (analytics && analytics.logEvent) {
+      analytics.logEvent("select_adkar_category", { category: categoryId });
+    }
     router.push(`/adkar/${categoryId}`);
   };
 
@@ -115,14 +125,14 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    padding: 20,
-    gap: 16,
+    padding: getResponsivePadding(20),
+    gap: getResponsiveSize(16),
   },
   card: {
-    marginBottom: 16,
-    padding: 20,
+    marginBottom: getResponsiveMargin(16),
+    padding: getResponsivePadding(20),
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: getResponsiveSize(12),
     borderWidth: 1,
     borderColor: colors.border,
     shadowColor: "#000",
@@ -150,20 +160,20 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   },
 
   title: {
-    fontSize: getTextSize(28, textSize),
+    fontSize: getTextSize(isSmallScreen ? 24 : 28, textSize),
     textAlign: "center",
     color: colors.textPrimary,
-    marginBottom: 8,
+    marginBottom: getResponsiveMargin(8),
     fontWeight: "600",
   },
   subtitle: {
     fontSize: getTextSize(16, textSize),
     textAlign: "center",
     color: colors.textSecondary,
-    marginBottom: 24,
+    marginBottom: getResponsiveMargin(24),
   },
   categoriesContainer: {
-    gap: 12,
+    gap: getResponsiveSize(12),
   },
   nom_en_Arabe: {
     fontSize: getTextSize(20, textSize),

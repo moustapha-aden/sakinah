@@ -18,8 +18,8 @@ import { useSettings } from "../../hooks/useSettings";
 import { getTextSize, getLineHeight } from "../../utils/textSize";
 import { duas } from "../../data/dua";
 import { useFavorites } from "../../hooks/useFavorites";
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+import { analytics } from "../../lib/firebase";
+import { getResponsiveSize, getResponsivePadding, getResponsiveMargin, isSmallScreen, SCREEN_WIDTH, SCREEN_HEIGHT } from "../../utils/responsive";
 
 // Fonction pour obtenir l'icône selon la catégorie
 const getCategoryIcon = (category: string) => {
@@ -82,6 +82,12 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
   const [selectedDuaIndex, setSelectedDuaIndex] = useState<number | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const { toggleFavorite, isFavorite } = useFavorites();
+
+  useEffect(() => {
+    if (analytics && analytics.logEvent) {
+      analytics.logEvent("open_dua");
+    }
+  }, []);
 
   // Si un duaId est passé en paramètre, ouvrir directement ce dua
   useEffect(() => {
@@ -148,6 +154,13 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
 
 
   const handleDuaSelect = (index: number) => {
+    const selectedDua = filteredDuas[index];
+    if (analytics && analytics.logEvent && selectedDua) {
+      analytics.logEvent("view_dua", { 
+        dua_id: selectedDua.id,
+        category: selectedDua.category 
+      });
+    }
     setSelectedDuaIndex(index);
   };
 
@@ -491,41 +504,41 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   },
   // Styles pour la vue liste
   searchContainer: {
-    padding: 16,
+    padding: getResponsivePadding(16),
     backgroundColor: colors.background,
   },
   searchInputContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: getResponsiveSize(12),
     borderWidth: 1,
     borderColor: colors.border,
-    paddingHorizontal: 12,
+    paddingHorizontal: getResponsivePadding(12),
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: getResponsiveSize(8),
   },
   searchInput: {
     flex: 1,
-    padding: 14,
-    fontSize: 16,
+    padding: getResponsivePadding(14),
+    fontSize: getTextSize(16, textSize),
     color: colors.textPrimary,
   },
   clearButton: {
-    padding: 4,
+    padding: getResponsivePadding(4),
   },
   listContainer: {
     flex: 1,
   },
   listContent: {
-    padding: 16,
-    gap: 12,
+    padding: getResponsivePadding(16),
+    gap: getResponsiveSize(12),
   },
   duaItem: {
     backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: getResponsiveSize(12),
+    padding: getResponsivePadding(16),
     borderWidth: 1,
     borderColor: colors.border,
     shadowColor: "#000",
@@ -546,7 +559,7 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     alignItems: "center",
   },
   duaItemIcon: {
-    marginRight: 12,
+    marginRight: getResponsiveSize(12),
   },
   duaItemText: {
     flex: 1,
@@ -567,13 +580,13 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     flex: 1,
   },
   detailContent: {
-    padding: 20,
-    paddingBottom: 100,
+    padding: getResponsivePadding(20),
+    paddingBottom: getResponsivePadding(100),
   },
   detailCard: {
     backgroundColor: colors.card,
-    borderRadius: 20,
-    padding: 24,
+    borderRadius: getResponsiveSize(20),
+    padding: getResponsivePadding(24),
     borderWidth: 1,
     borderColor: colors.border,
     shadowColor: "#000",

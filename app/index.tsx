@@ -23,6 +23,8 @@ import { useStats } from "../contexts/StatsContext";
 import { getTextSize } from "../utils/textSize";
 import { hadiths, quoteImages } from "../data/hadith";
 import { translations } from "../utils/translations";
+import { analytics } from "../lib/firebase";
+import { getResponsivePadding, getResponsiveMargin, getResponsiveSize, isSmallScreen } from "../utils/responsive";
 
 
 export default function HomeScreen() {
@@ -38,6 +40,9 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       refreshStats();
+      if (analytics && analytics.logEvent) {
+        analytics.logEvent("open_home");
+      }
     }, [refreshStats])
   );
   
@@ -307,7 +312,12 @@ export default function HomeScreen() {
               opacity: fadeAnim,
             }}
           >
-            <AppButton title={t("home.adkar")} onPress={() => router.push("/adkar")} />
+            <AppButton title={t("home.adkar")} onPress={() => {
+              if (analytics && analytics.logEvent) {
+                analytics.logEvent("navigate_to_adkar");
+              }
+              router.push("/adkar");
+            }} />
           </Animated.View>
 
           <Animated.View
@@ -316,7 +326,12 @@ export default function HomeScreen() {
               opacity: fadeAnim,
             }}
           >
-            <AppButton title={t("home.dua")} onPress={() => router.push("/dua")} />
+            <AppButton title={t("home.dua")} onPress={() => {
+              if (analytics && analytics.logEvent) {
+                analytics.logEvent("navigate_to_dua");
+              }
+              router.push("/dua");
+            }} />
           </Animated.View>
 
           <Animated.View
@@ -325,7 +340,12 @@ export default function HomeScreen() {
               opacity: fadeAnim,
             }}
           >
-            <AppButton title={t("home.tasbih")} onPress={() => router.push("/tasbih")} />
+            <AppButton title={t("home.tasbih")} onPress={() => {
+              if (analytics && analytics.logEvent) {
+                analytics.logEvent("navigate_to_tasbih");
+              }
+              router.push("/tasbih");
+            }} />
           </Animated.View>
         </View>
 
@@ -400,24 +420,24 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    padding: 20,
+    padding: getResponsivePadding(20),
   },
 
   title: {
-    fontSize: getTextSize(28, textSize),
+    fontSize: getTextSize(isSmallScreen ? 24 : 28, textSize),
     textAlign: "center",
     color: colors.textPrimary,
-    marginBottom: 20,
-    marginTop: 10,
+    marginBottom: getResponsiveMargin(20),
+    marginTop: getResponsiveMargin(10),
     fontWeight: "600",
   },
 
   // CARTE CITATION
   quoteCard: {
-    height: 220,
-    borderRadius: 20,
+    height: isSmallScreen ? 180 : 220,
+    borderRadius: getResponsiveSize(20),
     overflow: "hidden",
-    marginBottom: 20,
+    marginBottom: getResponsiveMargin(20),
     elevation: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -435,7 +455,7 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
 
   quoteGradient: {
     flex: 1,
-    padding: 20,
+    padding: getResponsivePadding(20),
     justifyContent: "center",
   },
 
@@ -478,15 +498,15 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   // STATISTIQUES
   statsSection: {
     flexDirection: "row",
-    gap: 12,
-    marginBottom: 20,
+    gap: getResponsiveSize(12),
+    marginBottom: getResponsiveMargin(20),
   },
 
   statCard: {
     flex: 1,
     backgroundColor: colors.card,
-    padding: 16,
-    borderRadius: 16,
+    padding: getResponsivePadding(16),
+    borderRadius: getResponsiveSize(16),
     alignItems: "center",
     elevation: 3,
     shadowColor: "#000",
@@ -511,8 +531,8 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
 
   // BOUTONS
   buttonsContainer: {
-    gap: 16,
-    marginBottom: 24,
+    gap: getResponsiveSize(16),
+    marginBottom: getResponsiveMargin(24),
   },
 
   // SECTION HADITHS
@@ -535,11 +555,11 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
 
   hadithCard: {
     backgroundColor: colors.card,
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 10,
+    padding: getResponsivePadding(14),
+    borderRadius: getResponsiveSize(12),
+    marginBottom: getResponsiveMargin(10),
     flexDirection: "row",
-    gap: 12,
+    gap: getResponsiveSize(12),
     elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
@@ -548,9 +568,9 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   },
 
   hadithIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: getResponsiveSize(40),
+    height: getResponsiveSize(40),
+    borderRadius: getResponsiveSize(20),
     backgroundColor: colors.accent + "15",
     justifyContent: "center",
     alignItems: "center",

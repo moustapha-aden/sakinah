@@ -29,15 +29,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#B6DBF2",
-          "sounds": []
-        }
-      ]
+      "expo-router"
     ],
     "extra": {
       "router": {},
