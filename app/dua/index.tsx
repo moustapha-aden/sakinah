@@ -12,7 +12,7 @@ import {
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useState, useRef, useMemo, useLayoutEffect, useEffect } from "react";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
-import { colors } from "../../constants/colors";
+import { useTheme } from "../../contexts/ThemeContext";
 import { duas } from "../../data/dua";
 import { useFavorites } from "../../hooks/useFavorites";
 
@@ -63,6 +63,13 @@ const getCategoryIcon = (category: string) => {
 };
 
 export default function DuaScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  
+  return <DuaScreenContent styles={styles} colors={colors} />;
+}
+
+function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
   const navigation = useNavigation();
   const params = useLocalSearchParams<{ duaId?: string }>();
   const [searchQuery, setSearchQuery] = useState("");
@@ -471,7 +478,7 @@ export default function DuaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     marginTop: 40,
     flex: 1,

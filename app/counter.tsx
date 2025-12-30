@@ -1,9 +1,11 @@
 import { View, Text, StyleSheet } from "react-native";
 import AppButton from "../components/AppButton";
 import { useCounter } from "../hooks/useCounter";
-import { colors } from "../constants/colors";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function CounterScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { count, increment, reset } = useCounter();
 
   return (
@@ -15,7 +17,7 @@ export default function CounterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

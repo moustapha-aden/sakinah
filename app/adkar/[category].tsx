@@ -9,13 +9,15 @@ import {
 import { useState, useRef, useLayoutEffect } from "react";
 import { useLocalSearchParams, router, useNavigation } from "expo-router";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
-import { colors } from "../../constants/colors";
+import { useTheme } from "../../contexts/ThemeContext";
 import { adkar } from "../../data/adkar";
 import { adkarCategories } from "../../data/categories";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function AdkarCategoryScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { category } = useLocalSearchParams<{ category: string }>();
   const navigation = useNavigation();
   const categoryAdkar = adkar.filter((item) => item.category === category);
@@ -159,7 +161,7 @@ export default function AdkarCategoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     marginTop: 40,
     flex: 1,

@@ -7,39 +7,38 @@ import {
   Pressable,
 } from "react-native";
 import { useState } from "react";
-import { Stack, router } from "expo-router";
+import { Stack, router, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useLayoutEffect } from "react";
 
 import AppButton from "../components/AppButton";
-import { colors } from "../constants/colors";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
+  const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
+  const styles = createStyles(colors);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity onPress={() => setMenuVisible(true)}>
+          <Ionicons name="menu" size={26} color={colors.textPrimary} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, colors]);
 
   const handleMenuAction = (action: string) => {
     setMenuVisible(false);
 
-    if (action === "favorites") router.push("settings/favorites");
-    if (action === "settings") router.push("settings/settings");
+    if (action === "favorites") router.push("/settings/favorites");
+    if (action === "settings") router.push("/settings/settings");
   };
 
   return (
-    <>
-      {/* HEADER CONFIGURATION */}
-      <Stack.Screen
-        options={{
-          title: "Sakīnah",
-          headerTitleAlign: "center",
-
-          headerRight: () => (
-            <TouchableOpacity onPress={() => setMenuVisible(true)}>
-              <Ionicons name="menu" size={26} color={colors.textPrimary} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-
-      <View style={styles.container}>
+    <View style={styles.container}>
         {/* MODAL MENU */}
         <Modal
           visible={menuVisible}
@@ -90,13 +89,10 @@ export default function HomeScreen() {
         <AppButton title="🤲 Duʿāʾ" onPress={() => router.push("/dua")} />
         <AppButton title="🔢 Compteur" onPress={() => router.push("/counter")} />
       </View>
-    </>
   );
 }
 
-
-// STYLE
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

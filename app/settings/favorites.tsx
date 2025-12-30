@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { router, useNavigation } from "expo-router";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useState, useEffect, useLayoutEffect } from "react";
-import { colors } from "../../constants/colors";
+import { useTheme } from "../../contexts/ThemeContext";
 import { duas } from "../../data/dua";
 import { useFavorites } from "../../hooks/useFavorites";
 
@@ -28,15 +28,17 @@ const getCategoryIcon = (category: string) => {
 
 
 export default function DuaFavoritesScreen() {
-
-    const NomHeader = "Favoris";
-    const navigation = useNavigation();
-    // Définir le titre du header dynamiquement
-    useLayoutEffect(() => {
-      navigation.setOptions({
-        title: NomHeader,
-      });
-    }, [ NomHeader, navigation]);
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  const NomHeader = "Favoris";
+  const navigation = useNavigation();
+  
+  // Définir le titre du header dynamiquement
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: NomHeader,
+    });
+  }, [NomHeader, navigation]);
 
   const { favorites: favoriteIds, removeFavorite, loading } = useFavorites();
   const [favoriteDuas, setFavoriteDuas] = useState<any[]>([]);
@@ -154,7 +156,7 @@ export default function DuaFavoritesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

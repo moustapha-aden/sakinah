@@ -1,11 +1,13 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { colors } from "../constants/colors";
+import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 
-export default function RootLayout() {
+function RootLayoutNav() {
+  const { colors, theme } = useTheme();
+
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style={theme === "dark" ? "light" : "dark"} />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: colors.primary },
@@ -19,8 +21,19 @@ export default function RootLayout() {
         <Stack.Screen name="settings/favorites" options={{ title: "Favoris" }} />
         <Stack.Screen name="dua/onboarding" options={{ title: "Bienvenue" }} />
         <Stack.Screen name="settings/settings" options={{ title: "Paramètres" }} />
+        <Stack.Screen name="settings/language" options={{ title: "Langue" }} />
+        <Stack.Screen name="settings/textSize" options={{ title: "Taille du texte" }} />
+        <Stack.Screen name="settings/help" options={{ title: "Aide" }} />
         <Stack.Screen name="counter" options={{ title: "Tasbih" }} />
       </Stack>
     </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <RootLayoutNav />
+    </ThemeProvider>
   );
 }

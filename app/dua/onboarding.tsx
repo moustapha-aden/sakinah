@@ -1,9 +1,12 @@
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { router } from "expo-router";
 import AppButton from "../../components/AppButton";
-import { colors } from "../../constants/colors";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export default function DuaOnboardingScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   const handleGetStarted = () => {
     router.replace("/dua");
   };
@@ -44,7 +47,7 @@ export default function DuaOnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

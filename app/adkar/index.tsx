@@ -1,9 +1,12 @@
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { router } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
-import { colors } from "../../constants/colors";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export default function AdkarScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   const handleCategoryPress = (categoryId: string) => {
     router.push(`/adkar/${categoryId}`);
   };
@@ -99,7 +102,7 @@ export default function AdkarScreen() {
 }
 
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   container: {
     marginTop: 40,
     flex: 1,
