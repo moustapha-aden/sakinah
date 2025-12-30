@@ -32,7 +32,7 @@ Une application mobile dédiée aux invocations et adkâr islamiques, conçue po
 - **Notifications** : Activez/désactivez les rappels
 - **Aide** : FAQ et support
 
-### 🔢 Compteur (Tasbih)
+### 🔢 Compteur (tasbih)
 - Compteur simple pour vos récitations
 
 ## 🚀 Installation
@@ -98,7 +98,7 @@ sakinah/
 │   │   ├── language.tsx   # Sélection de langue
 │   │   ├── textSize.tsx   # Taille du texte
 │   │   └── help.tsx       # Aide et FAQ
-│   └── counter.tsx        # Compteur (Tasbih)
+│   └── tasbih.tsx        # Compteur (tasbih)
 ├── components/            # Composants réutilisables
 │   └── AppButton.tsx
 ├── contexts/              # Contextes React
@@ -107,7 +107,7 @@ sakinah/
 │   ├── TranslationContext.tsx # Système de traduction
 │   └── StatsContext.tsx  # Statistiques et progression
 ├── hooks/                 # Hooks personnalisés
-│   ├── useCounter.ts
+│   ├── usetasbih.ts
 │   ├── useFavorites.ts
 │   └── useSettings.ts
 ├── data/                  # Données de l'application

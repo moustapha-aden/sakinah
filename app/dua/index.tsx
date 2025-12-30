@@ -486,7 +486,6 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
 
 const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   container: {
-    marginTop: 40,
     flex: 1,
     backgroundColor: colors.background,
   },

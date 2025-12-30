@@ -72,8 +72,8 @@ function RootLayoutNav() {
           options={{ title: t("help.title") }} 
         />
         <Stack.Screen 
-          name="counter" 
-          options={{ title: t("counter.title") }} 
+          name="tasbih" 
+          options={{ title: t("tasbih.title") }} 
         />
       </Stack>
     </>

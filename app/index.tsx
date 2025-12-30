@@ -21,14 +21,9 @@ import { useTranslation } from "../contexts/TranslationContext";
 import { useSettings } from "../hooks/useSettings";
 import { useStats } from "../contexts/StatsContext";
 import { getTextSize } from "../utils/textSize";
+import { hadiths, quoteImages } from "../data/hadith";
+import { translations } from "../utils/translations";
 
-// Images pour les citations
-const QUOTE_IMAGES = [
-  "https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=800",
-  "https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=800",
-  "https://images.unsplash.com/photo-1519817914152-22d216bb9170?w=800",
-  "https://images.unsplash.com/photo-1585036156171-384164a8c675?w=800",
-];
 
 export default function HomeScreen() {
   const { colors } = useTheme();
@@ -60,47 +55,44 @@ export default function HomeScreen() {
 
   // Obtenir les citations traduites selon la langue
   const getQuotes = useCallback(() => {
-    const quotes = [
-      {
-        id: 1,
-        text: t("home.quotes.quote1.text"),
-        translation: t("home.quotes.quote1.translation"),
-        source: t("home.quotes.quote1.source"),
-        image: QUOTE_IMAGES[0],
-      },
-      {
-        id: 2,
-        text: t("home.quotes.quote2.text"),
-        translation: t("home.quotes.quote2.translation"),
-        source: t("home.quotes.quote2.source"),
-        image: QUOTE_IMAGES[1],
-      },
-      {
-        id: 3,
-        text: t("home.quotes.quote3.text"),
-        translation: t("home.quotes.quote3.translation"),
-        source: t("home.quotes.quote3.source"),
-        image: QUOTE_IMAGES[2],
-      },
-      {
-        id: 4,
-        text: t("home.quotes.quote4.text"),
-        translation: t("home.quotes.quote4.translation"),
-        source: t("home.quotes.quote4.source"),
-        image: QUOTE_IMAGES[3],
-      },
-    ];
-    return quotes;
-  }, [t, language]);
+    const currentLang = settings.language || "fr";
+    const langTranslations = translations[currentLang as keyof typeof translations] || translations.fr;
+    
+    return hadiths
+      .map((hadith) => {
+        try {
+          // Accéder directement à l'objet de traduction
+          const quoteData = (langTranslations.home?.quotes as any)?.[hadith.translationKey];
+          
+          if (quoteData && typeof quoteData === 'object' && 'text' in quoteData && 'translation' in quoteData) {
+            return {
+              id: hadith.id,
+              text: quoteData.text,
+              translation: quoteData.translation,
+              source: quoteData.source || '',
+              image: quoteImages[hadith.imageIndex],
+            };
+          }
+          return null;
+        } catch (error) {
+          console.error(`Error loading quote ${hadith.translationKey}:`, error);
+          return null;
+        }
+      })
+      .filter((quote): quote is NonNullable<typeof quote> => quote !== null);
+  }, [settings.language]);
 
   const quotes = useMemo(() => getQuotes(), [getQuotes]);
-  const currentQuote = quotes[currentQuoteIndex];
-
+  
   // Sélectionner une citation aléatoire au chargement et quand la langue change
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * quotes.length);
-    setCurrentQuoteIndex(randomIndex);
+    if (quotes.length > 0) {
+      const randomIndex = Math.floor(Math.random() * quotes.length);
+      setCurrentQuoteIndex(randomIndex);
+    }
   }, [language, quotes.length]);
+
+  const currentQuote = quotes[currentQuoteIndex] || (quotes.length > 0 ? quotes[0] : null);
 
   // Animation d'entrée au chargement
   useEffect(() => {
@@ -265,30 +257,32 @@ export default function HomeScreen() {
         </Animated.Text>
 
         {/* CARTE CITATION DU JOUR */}
-        <Animated.View style={[styles.quoteCard, { opacity: quoteOpacity }]}>
-          <ImageBackground
-            source={{ uri: currentQuote.image }}
-            style={styles.quoteImageBackground}
-            imageStyle={styles.quoteImage}
-          >
-            <LinearGradient
-              colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0.85)']}
-              style={styles.quoteGradient}
+        {currentQuote && (
+          <Animated.View style={[styles.quoteCard, { opacity: quoteOpacity }]}>
+            <ImageBackground
+              source={currentQuote.image}
+              style={styles.quoteImageBackground}
+              imageStyle={styles.quoteImage}
             >
-              <View style={styles.quoteIconContainer}>
-                <Ionicons name="book-outline" size={28} color="#FFD700" />
-              </View>
-              
-              <Text style={styles.quoteArabic}>{currentQuote.text}</Text>
-              <Text style={styles.quoteTranslation}>{currentQuote.translation}</Text>
-              
-              <View style={styles.quoteSourceContainer}>
-                <Ionicons name="bookmark" size={16} color="#FFD700" />
-                <Text style={styles.quoteSource}>{currentQuote.source}</Text>
-              </View>
-            </LinearGradient>
-          </ImageBackground>
-        </Animated.View>
+              <LinearGradient
+                colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0.85)']}
+                style={styles.quoteGradient}
+              >
+                <View style={styles.quoteIconContainer}>
+                  <Ionicons name="book-outline" size={28} color="#FFD700" />
+                </View>
+                
+                <Text style={styles.quoteArabic}>{currentQuote.text}</Text>
+                <Text style={styles.quoteTranslation}>{currentQuote.translation}</Text>
+                
+                <View style={styles.quoteSourceContainer}>
+                  <Ionicons name="bookmark" size={16} color="#FFD700" />
+                  <Text style={styles.quoteSource}>{currentQuote.source}</Text>
+                </View>
+              </LinearGradient>
+            </ImageBackground>
+          </Animated.View>
+        )}
 
         {/* SECTION STATISTIQUES */}
         <Animated.View style={[styles.statsSection, { opacity: fadeAnim }]}>
@@ -331,7 +325,7 @@ export default function HomeScreen() {
               opacity: fadeAnim,
             }}
           >
-            <AppButton title={t("home.counter")} onPress={() => router.push("/counter")} />
+            <AppButton title={t("home.tasbih")} onPress={() => router.push("/tasbih")} />
           </Animated.View>
         </View>
 
@@ -342,19 +336,43 @@ export default function HomeScreen() {
             <Text style={styles.sectionTitle}>{t("home.hadithsOfDay")}</Text>
           </View>
 
-          {quotes.slice(0, 3).map((quote, index) => (
-            <View key={quote.id} style={styles.hadithCard}>
-              <View style={styles.hadithIcon}>
-                <Ionicons name="book" size={20} color={colors.accent} />
+          {quotes.length > 0 ? (() => {
+            // Sélectionner 3 hadiths aléatoires différents de celui affiché en haut
+            const availableQuotes = currentQuote 
+              ? quotes.filter(q => q.id !== currentQuote.id)
+              : quotes;
+            
+            // S'assurer qu'on a au moins 3 hadiths disponibles
+            const hadithsToShow = availableQuotes.length >= 3 
+              ? availableQuotes.length 
+              : quotes.length;
+            
+            // Mélanger et prendre les premiers
+            const shuffled = [...availableQuotes].sort(() => Math.random() - 0.5);
+            const randomHadiths = shuffled.slice(0, Math.min(3, hadithsToShow));
+            
+            return randomHadiths.length > 0 ? randomHadiths.map((quote) => (
+              <View key={quote.id} style={styles.hadithCard}>
+                <View style={styles.hadithIcon}>
+                  <Ionicons name="book" size={20} color={colors.accent} />
+                </View>
+                <View style={styles.hadithContent}>
+                  <Text style={styles.hadithText} numberOfLines={2}>
+                    {quote.translation}
+                  </Text>
+                  <Text style={styles.hadithSource}>{quote.source}</Text>
+                </View>
               </View>
-              <View style={styles.hadithContent}>
-                <Text style={styles.hadithText} numberOfLines={2}>
-                  {quote.translation}
-                </Text>
-                <Text style={styles.hadithSource}>{quote.source}</Text>
+            )) : (
+              <View style={styles.hadithCard}>
+                <Text style={styles.hadithText}>Chargement...</Text>
               </View>
+            );
+          })() : (
+            <View style={styles.hadithCard}>
+              <Text style={styles.hadithText}>Aucun hadith disponible</Text>
             </View>
-          ))}
+          )}
         </Animated.View>
 
         {/* PIED DE PAGE INSPIRANT */}
