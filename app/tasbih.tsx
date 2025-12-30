@@ -3,7 +3,7 @@ import { useMemo, useRef, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import AppButton from "../components/AppButton";
-import { usetasbih } from "../hooks/usetasbih";
+import { useTasbih } from "../hooks/useTasbih";
 import { useTheme } from "../contexts/ThemeContext";
 import { useTranslation } from "../contexts/TranslationContext";
 import { useSettings } from "../hooks/useSettings";
@@ -16,7 +16,7 @@ export default function tasbihScreen() {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
-  const { count, increment, reset } = usetasbih();
+  const { count, increment, reset } = useTasbih();
 
   useEffect(() => {
     if (analytics && analytics.logEvent) {
