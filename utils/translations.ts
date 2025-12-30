@@ -5,6 +5,32 @@ export const translations = {
       adkar: "📿 Adkâr",
       dua: "🤲 Duʿāʾ",
       counter: "🔢 Compteur",
+      streakDays: "Jours d'affilée",
+      completedAdkar: "Adhkar complétés",
+      hadithsOfDay: "Hadiths du jour",
+      footerQuote: "La meilleure des œuvres est celle qui est constante, même si elle est petite",
+      quotes: {
+        quote1: {
+          text: "إِنَّ مَعَ الْعُسْرِ يُسْرًا",
+          translation: "Certes, avec la difficulté vient la facilité",
+          source: "Coran 94:6",
+        },
+        quote2: {
+          text: "الدُّنْيَا سِجْنُ الْمُؤْمِنِ وَجَنَّةُ الْكَافِرِ",
+          translation: "Ce monde est une prison pour le croyant et un paradis pour le mécréant",
+          source: "Sahih Muslim",
+        },
+        quote3: {
+          text: "تَفَكَّرُوا فِي خَلْقِ اللَّهِ وَلَا تَفَكَّرُوا فِي اللَّهِ",
+          translation: "Réfléchissez sur la création d'Allah, mais ne réfléchissez pas sur Allah Lui-même",
+          source: "Abu Dawud",
+        },
+        quote4: {
+          text: "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ",
+          translation: "Le meilleur d'entre vous est celui qui apprend le Coran et l'enseigne",
+          source: "Sahih Al-Bukhari",
+        },
+      },
     },
     menu: {
       title: "Menu",
@@ -26,6 +52,8 @@ export const translations = {
       times: "fois",
       previous: "Précédent",
       next: "Suivant",
+      complete: "Terminé",
+      completed: "Complété",
       empty: "Aucun adkâr disponible",
       emptyText: "Cette catégorie est vide. Vous pouvez ajouter des adkâr dans le fichier data/adkar.ts",
       back: "Retour",
@@ -137,6 +165,32 @@ export const translations = {
       adkar: "📿 أذكار",
       dua: "🤲 دعاء",
       counter: "🔢 مسبحة",
+      streakDays: "أيام متتالية",
+      completedAdkar: "أذكار مكتملة",
+      hadithsOfDay: "أحاديث اليوم",
+      footerQuote: "أفضل الأعمال أدومها وإن قل",
+      quotes: {
+        quote1: {
+          text: "إِنَّ مَعَ الْعُسْرِ يُسْرًا",
+          translation: "إن مع العسر يسرا",
+          source: "القرآن 94:6",
+        },
+        quote2: {
+          text: "الدُّنْيَا سِجْنُ الْمُؤْمِنِ وَجَنَّةُ الْكَافِرِ",
+          translation: "الدنيا سجن المؤمن وجنة الكافر",
+          source: "صحيح مسلم",
+        },
+        quote3: {
+          text: "تَفَكَّرُوا فِي خَلْقِ اللَّهِ وَلَا تَفَكَّرُوا فِي اللَّهِ",
+          translation: "تفكروا في خلق الله ولا تفكروا في الله",
+          source: "أبو داود",
+        },
+        quote4: {
+          text: "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ",
+          translation: "خيركم من تعلم القرآن وعلمه",
+          source: "صحيح البخاري",
+        },
+      },
     },
     menu: {
       title: "القائمة",
@@ -269,6 +323,32 @@ export const translations = {
       adkar: "📿 Adkâr",
       dua: "🤲 Duʿāʾ",
       counter: "🔢 Counter",
+      streakDays: "Days in a row",
+      completedAdkar: "Completed Adkâr",
+      hadithsOfDay: "Hadiths of the day",
+      footerQuote: "The best of deeds is that which is consistent, even if it is small",
+      quotes: {
+        quote1: {
+          text: "إِنَّ مَعَ الْعُسْرِ يُسْرًا",
+          translation: "Indeed, with hardship comes ease",
+          source: "Quran 94:6",
+        },
+        quote2: {
+          text: "الدُّنْيَا سِجْنُ الْمُؤْمِنِ وَجَنَّةُ الْكَافِرِ",
+          translation: "This world is a prison for the believer and a paradise for the disbeliever",
+          source: "Sahih Muslim",
+        },
+        quote3: {
+          text: "تَفَكَّرُوا فِي خَلْقِ اللَّهِ وَلَا تَفَكَّرُوا فِي اللَّهِ",
+          translation: "Reflect on the creation of Allah, but do not reflect on Allah Himself",
+          source: "Abu Dawud",
+        },
+        quote4: {
+          text: "خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ",
+          translation: "The best of you is the one who learns the Quran and teaches it",
+          source: "Sahih Al-Bukhari",
+        },
+      },
     },
     menu: {
       title: "Menu",
@@ -290,6 +370,8 @@ export const translations = {
       times: "times",
       previous: "Previous",
       next: "Next",
+      complete: "Complete",
+      completed: "Completed",
       empty: "No adkâr available",
       emptyText: "This category is empty. You can add adkâr in the data/adkar.ts file",
       back: "Back",

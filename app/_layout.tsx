@@ -4,6 +4,7 @@ import { useLayoutEffect } from "react";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 import { SettingsProvider } from "../contexts/SettingsContext";
 import { TranslationProvider, useTranslation } from "../contexts/TranslationContext";
+import { StatsProvider } from "../contexts/StatsContext";
 import { useNavigation } from "expo-router";
 
 function RootLayoutNav() {
@@ -83,9 +84,11 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <SettingsProvider>
-        <TranslationProvider>
-          <RootLayoutNav />
-        </TranslationProvider>
+        <StatsProvider>
+          <TranslationProvider>
+            <RootLayoutNav />
+          </TranslationProvider>
+        </StatsProvider>
       </SettingsProvider>
     </ThemeProvider>
   );

@@ -110,7 +110,7 @@ export default function AdkarScreen() {
 
 const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   container: {
-    marginTop: 40,
+    // marginTop: 40,
     flex: 1,
     backgroundColor: colors.background,
   },

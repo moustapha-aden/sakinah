@@ -5,27 +5,179 @@ import {
   Modal,
   TouchableOpacity,
   Pressable,
+  Animated,
+  ImageBackground,
+  ScrollView,
 } from "react-native";
-import { useState, useMemo } from "react";
-import { Stack, router, useNavigation, useFocusEffect } from "expo-router";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { router, useNavigation, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useLayoutEffect, useCallback } from "react";
+import { useLayoutEffect } from "react";
+import { LinearGradient } from "expo-linear-gradient";
 
 import AppButton from "../components/AppButton";
 import { useTheme } from "../contexts/ThemeContext";
 import { useTranslation } from "../contexts/TranslationContext";
 import { useSettings } from "../hooks/useSettings";
+import { useStats } from "../contexts/StatsContext";
 import { getTextSize } from "../utils/textSize";
+
+// Images pour les citations
+const QUOTE_IMAGES = [
+  "https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=800",
+  "https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=800",
+  "https://images.unsplash.com/photo-1519817914152-22d216bb9170?w=800",
+  "https://images.unsplash.com/photo-1585036156171-384164a8c675?w=800",
+];
 
 export default function HomeScreen() {
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { settings } = useSettings();
+  const { stats, loading: statsLoading, refreshStats } = useStats();
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+
+  // Recharger les stats quand l'écran est focus
+  useFocusEffect(
+    useCallback(() => {
+      refreshStats();
+    }, [refreshStats])
+  );
   
-  // Recréer les styles quand textSize change
+  // Animations refs
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const titleScale = useRef(new Animated.Value(0.8)).current;
+  const button1Translate = useRef(new Animated.Value(50)).current;
+  const button2Translate = useRef(new Animated.Value(50)).current;
+  const button3Translate = useRef(new Animated.Value(50)).current;
+  const quoteOpacity = useRef(new Animated.Value(0)).current;
+  const menuScale = useRef(new Animated.Value(0.8)).current;
+  const menuOpacity = useRef(new Animated.Value(0)).current;
+  
   const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
+
+  // Obtenir les citations traduites selon la langue
+  const getQuotes = useCallback(() => {
+    const quotes = [
+      {
+        id: 1,
+        text: t("home.quotes.quote1.text"),
+        translation: t("home.quotes.quote1.translation"),
+        source: t("home.quotes.quote1.source"),
+        image: QUOTE_IMAGES[0],
+      },
+      {
+        id: 2,
+        text: t("home.quotes.quote2.text"),
+        translation: t("home.quotes.quote2.translation"),
+        source: t("home.quotes.quote2.source"),
+        image: QUOTE_IMAGES[1],
+      },
+      {
+        id: 3,
+        text: t("home.quotes.quote3.text"),
+        translation: t("home.quotes.quote3.translation"),
+        source: t("home.quotes.quote3.source"),
+        image: QUOTE_IMAGES[2],
+      },
+      {
+        id: 4,
+        text: t("home.quotes.quote4.text"),
+        translation: t("home.quotes.quote4.translation"),
+        source: t("home.quotes.quote4.source"),
+        image: QUOTE_IMAGES[3],
+      },
+    ];
+    return quotes;
+  }, [t, language]);
+
+  const quotes = useMemo(() => getQuotes(), [getQuotes]);
+  const currentQuote = quotes[currentQuoteIndex];
+
+  // Sélectionner une citation aléatoire au chargement et quand la langue change
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * quotes.length);
+    setCurrentQuoteIndex(randomIndex);
+  }, [language, quotes.length]);
+
+  // Animation d'entrée au chargement
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(titleScale, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.timing(quoteOpacity, {
+        toValue: 1,
+        duration: 800,
+        delay: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Animation en cascade des boutons
+    Animated.stagger(100, [
+      Animated.spring(button1Translate, {
+        toValue: 0,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.spring(button2Translate, {
+        toValue: 0,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.spring(button3Translate, {
+        toValue: 0,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  // Animation du menu
+  useEffect(() => {
+    if (menuVisible) {
+      Animated.parallel([
+        Animated.spring(menuScale, {
+          toValue: 1,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+        Animated.timing(menuOpacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(menuScale, {
+          toValue: 0.8,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(menuOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [menuVisible]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -45,12 +197,13 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.scrollContainer} contentContainerStyle={styles.scrollContent}>
+      <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
         {/* MODAL MENU */}
         <Modal
           visible={menuVisible}
           transparent
-          animationType="fade"
+          animationType="none"
           onRequestClose={() => setMenuVisible(false)}
         >
           <TouchableOpacity
@@ -58,7 +211,15 @@ export default function HomeScreen() {
             activeOpacity={1}
             onPress={() => setMenuVisible(false)}
           >
-            <View style={styles.menuContainer}>
+            <Animated.View
+              style={[
+                styles.menuContainer,
+                {
+                  opacity: menuOpacity,
+                  transform: [{ scale: menuScale }],
+                },
+              ]}
+            >
               <View style={styles.menuHeader}>
                 <Text style={styles.menuTitle}>{t("menu.title")}</Text>
                 <TouchableOpacity onPress={() => setMenuVisible(false)}>
@@ -73,6 +234,7 @@ export default function HomeScreen() {
               <Pressable
                 style={styles.menuItem}
                 onPress={() => handleMenuAction("favorites")}
+                android_ripple={{ color: colors.accent + "20" }}
               >
                 <Ionicons name="star" size={22} color={colors.accent} />
                 <Text style={styles.menuItemText}>{t("menu.favorites")}</Text>
@@ -81,41 +243,340 @@ export default function HomeScreen() {
               <Pressable
                 style={styles.menuItem}
                 onPress={() => handleMenuAction("settings")}
+                android_ripple={{ color: colors.accent + "20" }}
               >
                 <Ionicons name="settings" size={22} color={colors.accent} />
                 <Text style={styles.menuItemText}>{t("menu.settings")}</Text>
               </Pressable>
-            </View>
+            </Animated.View>
           </TouchableOpacity>
         </Modal>
 
-        {/* CONTENT */}
-        <Text style={styles.title}>🕊️ {t("home.title")}</Text>
+        {/* TITRE */}
+        <Animated.Text
+          style={[
+            styles.title,
+            {
+              transform: [{ scale: titleScale }],
+            },
+          ]}
+        >
+          🕊️ {t("home.title")}
+        </Animated.Text>
 
-        <AppButton title={t("home.adkar")} onPress={() => router.push("/adkar")} />
-        <AppButton title={t("home.dua")} onPress={() => router.push("/dua")} />
-        <AppButton title={t("home.counter")} onPress={() => router.push("/counter")} />
-      </View>
+        {/* CARTE CITATION DU JOUR */}
+        <Animated.View style={[styles.quoteCard, { opacity: quoteOpacity }]}>
+          <ImageBackground
+            source={{ uri: currentQuote.image }}
+            style={styles.quoteImageBackground}
+            imageStyle={styles.quoteImage}
+          >
+            <LinearGradient
+              colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0.85)']}
+              style={styles.quoteGradient}
+            >
+              <View style={styles.quoteIconContainer}>
+                <Ionicons name="book-outline" size={28} color="#FFD700" />
+              </View>
+              
+              <Text style={styles.quoteArabic}>{currentQuote.text}</Text>
+              <Text style={styles.quoteTranslation}>{currentQuote.translation}</Text>
+              
+              <View style={styles.quoteSourceContainer}>
+                <Ionicons name="bookmark" size={16} color="#FFD700" />
+                <Text style={styles.quoteSource}>{currentQuote.source}</Text>
+              </View>
+            </LinearGradient>
+          </ImageBackground>
+        </Animated.View>
+
+        {/* SECTION STATISTIQUES */}
+        <Animated.View style={[styles.statsSection, { opacity: fadeAnim }]}>
+          <View style={styles.statCard}>
+            <Ionicons name="flame" size={32} color="#FF6B6B" />
+            <Text style={styles.statNumber}>{statsLoading ? "..." : stats.streakDays}</Text>
+            <Text style={styles.statLabel}>{t("home.streakDays")}</Text>
+          </View>
+
+          <View style={styles.statCard}>
+            <Ionicons name="checkmark-circle" size={32} color="#4ECDC4" />
+            <Text style={styles.statNumber}>{statsLoading ? "..." : stats.completedAdkar}</Text>
+            <Text style={styles.statLabel}>{t("home.completedAdkar")}</Text>
+          </View>
+        </Animated.View>
+
+        {/* BOUTONS PRINCIPAUX */}
+        <View style={styles.buttonsContainer}>
+          <Animated.View
+            style={{
+              transform: [{ translateY: button1Translate }],
+              opacity: fadeAnim,
+            }}
+          >
+            <AppButton title={t("home.adkar")} onPress={() => router.push("/adkar")} />
+          </Animated.View>
+
+          <Animated.View
+            style={{
+              transform: [{ translateY: button2Translate }],
+              opacity: fadeAnim,
+            }}
+          >
+            <AppButton title={t("home.dua")} onPress={() => router.push("/dua")} />
+          </Animated.View>
+
+          <Animated.View
+            style={{
+              transform: [{ translateY: button3Translate }],
+              opacity: fadeAnim,
+            }}
+          >
+            <AppButton title={t("home.counter")} onPress={() => router.push("/counter")} />
+          </Animated.View>
+        </View>
+
+        {/* SECTION HADITHS RAPIDES */}
+        <Animated.View style={[styles.hadithsSection, { opacity: fadeAnim }]}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="library" size={24} color={colors.accent} />
+            <Text style={styles.sectionTitle}>{t("home.hadithsOfDay")}</Text>
+          </View>
+
+          {quotes.slice(0, 3).map((quote, index) => (
+            <View key={quote.id} style={styles.hadithCard}>
+              <View style={styles.hadithIcon}>
+                <Ionicons name="book" size={20} color={colors.accent} />
+              </View>
+              <View style={styles.hadithContent}>
+                <Text style={styles.hadithText} numberOfLines={2}>
+                  {quote.translation}
+                </Text>
+                <Text style={styles.hadithSource}>{quote.source}</Text>
+              </View>
+            </View>
+          ))}
+        </Animated.View>
+
+        {/* PIED DE PAGE INSPIRANT */}
+        <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
+          <Ionicons name="heart" size={16} color="#FF6B6B" />
+          <Text style={styles.footerText}>
+            "{t("home.footerQuote")}"
+          </Text>
+        </Animated.View>
+      </Animated.View>
+    </ScrollView>
   );
 }
 
 const createStyles = (colors: any, textSize: any) => StyleSheet.create({
+  scrollContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+  },
+
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    justifyContent: "center",
     padding: 20,
-    gap: 16,
   },
 
   title: {
     fontSize: getTextSize(28, textSize),
     textAlign: "center",
     color: colors.textPrimary,
-    marginBottom: 24,
+    marginBottom: 20,
+    marginTop: 10,
     fontWeight: "600",
   },
 
+  // CARTE CITATION
+  quoteCard: {
+    height: 220,
+    borderRadius: 20,
+    overflow: "hidden",
+    marginBottom: 20,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+
+  quoteImageBackground: {
+    flex: 1,
+  },
+
+  quoteImage: {
+    borderRadius: 20,
+  },
+
+  quoteGradient: {
+    flex: 1,
+    padding: 20,
+    justifyContent: "center",
+  },
+
+  quoteIconContainer: {
+    alignSelf: "center",
+    marginBottom: 12,
+  },
+
+  quoteArabic: {
+    fontSize: getTextSize(20, textSize),
+    color: "#FFFFFF",
+    textAlign: "center",
+    fontWeight: "700",
+    marginBottom: 8,
+    lineHeight: 32,
+  },
+
+  quoteTranslation: {
+    fontSize: getTextSize(14, textSize),
+    color: "#E0E0E0",
+    textAlign: "center",
+    marginBottom: 12,
+    fontStyle: "italic",
+    lineHeight: 20,
+  },
+
+  quoteSourceContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+
+  quoteSource: {
+    fontSize: getTextSize(12, textSize),
+    color: "#FFD700",
+    fontWeight: "600",
+  },
+
+  // STATISTIQUES
+  statsSection: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 20,
+  },
+
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.card,
+    padding: 16,
+    borderRadius: 16,
+    alignItems: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+
+  statNumber: {
+    fontSize: getTextSize(24, textSize),
+    fontWeight: "700",
+    color: colors.textPrimary,
+    marginTop: 8,
+  },
+
+  statLabel: {
+    fontSize: getTextSize(12, textSize),
+    color: colors.textSecondary,
+    marginTop: 4,
+    textAlign: "center",
+  },
+
+  // BOUTONS
+  buttonsContainer: {
+    gap: 16,
+    marginBottom: 24,
+  },
+
+  // SECTION HADITHS
+  hadithsSection: {
+    marginBottom: 20,
+  },
+
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+
+  sectionTitle: {
+    fontSize: getTextSize(18, textSize),
+    fontWeight: "600",
+    color: colors.textPrimary,
+  },
+
+  hadithCard: {
+    backgroundColor: colors.card,
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 10,
+    flexDirection: "row",
+    gap: 12,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+
+  hadithIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.accent + "15",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  hadithContent: {
+    flex: 1,
+  },
+
+  hadithText: {
+    fontSize: getTextSize(14, textSize),
+    color: colors.textPrimary,
+    marginBottom: 4,
+    lineHeight: 20,
+  },
+
+  hadithSource: {
+    fontSize: getTextSize(11, textSize),
+    color: colors.textSecondary,
+    fontStyle: "italic",
+  },
+
+  // FOOTER
+  footer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    backgroundColor: colors.card + "80",
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+
+  footerText: {
+    fontSize: getTextSize(12, textSize),
+    color: colors.textSecondary,
+    fontStyle: "italic",
+    textAlign: "center",
+    flex: 1,
+  },
+
+  // MODAL MENU
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
@@ -128,6 +589,11 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     width: "80%",
     borderRadius: 16,
     padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 
   menuHeader: {
@@ -148,6 +614,8 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     alignItems: "center",
     gap: 12,
     paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 8,
   },
 
   menuItemText: {
