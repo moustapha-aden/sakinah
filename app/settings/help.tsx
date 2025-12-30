@@ -20,33 +20,29 @@ export default function HelpScreen() {
   const { settings } = useSettings();
   const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
 
-  const faqItems = [
+  // Utiliser useMemo pour recréer les FAQ quand la langue change
+  const faqItems = useMemo(() => [
     {
-      question: "Comment ajouter une invocation aux favoris ?",
-      answer:
-        "Lorsque vous consultez une invocation, cliquez sur l'icône étoile dans le header ou dans la carte de l'invocation pour l'ajouter à vos favoris.",
+      question: t("help.faq1.question"),
+      answer: t("help.faq1.answer"),
     },
     {
-      question: "Comment rechercher une invocation ?",
-      answer:
-        "Utilisez la barre de recherche en haut de l'écran des invocations. Vous pouvez rechercher par titre, texte arabe ou traduction.",
+      question: t("help.faq2.question"),
+      answer: t("help.faq2.answer"),
     },
     {
-      question: "Comment changer le mode sombre ?",
-      answer:
-        "Allez dans Paramètres > Apparence et activez le mode sombre. Vous pouvez également choisir le mode automatique pour suivre les paramètres de votre appareil.",
+      question: t("help.faq3.question"),
+      answer: t("help.faq3.answer"),
     },
     {
-      question: "Comment naviguer entre les adkâr ?",
-      answer:
-        "Sélectionnez une catégorie (matin, soir, après la prière), puis utilisez les boutons Précédent/Suivant pour naviguer entre les invocations.",
+      question: t("help.faq4.question"),
+      answer: t("help.faq4.answer"),
     },
     {
-      question: "Les invocations sont-elles authentiques ?",
-      answer:
-        "Oui, toutes les invocations proviennent de sources authentiques (Coran, hadiths authentiques) et sont référencées avec leur source.",
+      question: t("help.faq5.question"),
+      answer: t("help.faq5.answer"),
     },
-  ];
+  ], [t]);
 
   return (
     <ScrollView style={styles.container}>
@@ -55,14 +51,14 @@ export default function HelpScreen() {
           <View style={styles.iconContainer}>
             <Ionicons name="help-circle" size={32} color={colors.accent} />
           </View>
-          <Text style={styles.title}>Aide et Support</Text>
+          <Text style={styles.title}>{t("help.title")}</Text>
           <Text style={styles.subtitle}>
-            Questions fréquentes et assistance
+            {t("help.subtitle")}
           </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Questions fréquentes</Text>
+          <Text style={styles.sectionTitle}>{t("help.faq")}</Text>
           {faqItems.map((item, index) => (
             <View key={index} style={styles.faqItem}>
               <View style={styles.faqQuestion}>
@@ -80,10 +76,10 @@ export default function HelpScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact</Text>
+          <Text style={styles.sectionTitle}>{t("help.contact")}</Text>
           <View style={styles.contactCard}>
             <Text style={styles.contactText}>
-              Pour toute question ou suggestion, n'hésitez pas à nous contacter.
+              {t("help.contactText")}
             </Text>
             <TouchableOpacity
               style={styles.contactButton}
@@ -92,19 +88,16 @@ export default function HelpScreen() {
               }}
             >
               <Ionicons name="mail" size={20} color={colors.textPrimary} />
-              <Text style={styles.contactButtonText}>Envoyer un email</Text>
+              <Text style={styles.contactButtonText}>{t("help.sendEmail")}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>À propos</Text>
+          <Text style={styles.sectionTitle}>{t("help.about")}</Text>
           <View style={styles.aboutCard}>
             <Text style={styles.aboutText}>
-              <Text style={styles.aboutBold}>Sakīnah</Text> est une application
-              dédiée aux invocations et adkâr islamiques. Notre objectif est de
-              faciliter l'accès aux invocations authentiques et de vous aider à
-              les intégrer dans votre quotidien.
+              <Text style={styles.aboutBold}>Sakīnah</Text> {t("help.aboutText")}
             </Text>
             <Text style={styles.versionText}>Version 1.0.0</Text>
           </View>
@@ -116,7 +109,7 @@ export default function HelpScreen() {
             onPress={() => router.back()}
           >
             <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
-            <Text style={styles.backButtonText}> Retour</Text>
+            <Text style={styles.backButtonText}> {t("help.back")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -150,13 +143,13 @@ const createStyles = (colors: any, textSize: any) =>
       borderColor: colors.accent,
     },
     title: {
-      fontSize: 28,
+      fontSize: getTextSize(28, textSize),
       fontWeight: "700",
       color: colors.textPrimary,
       marginBottom: 8,
     },
     subtitle: {
-      fontSize: 16,
+      fontSize: getTextSize(16, textSize),
       color: colors.textSecondary,
       textAlign: "center",
     },
@@ -164,7 +157,7 @@ const createStyles = (colors: any, textSize: any) =>
       marginBottom: 32,
     },
     sectionTitle: {
-      fontSize: 20,
+      fontSize: getTextSize(20, textSize),
       fontWeight: "600",
       color: colors.textPrimary,
       marginBottom: 16,

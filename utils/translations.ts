@@ -91,11 +91,31 @@ export const translations = {
       title: "Aide et Support",
       subtitle: "Questions fréquentes et assistance",
       faq: "Questions fréquentes",
+      faq1: {
+        question: "Comment ajouter une invocation aux favoris ?",
+        answer: "Lorsque vous consultez une invocation, cliquez sur l'icône étoile dans le header ou dans la carte de l'invocation pour l'ajouter à vos favoris.",
+      },
+      faq2: {
+        question: "Comment rechercher une invocation ?",
+        answer: "Utilisez la barre de recherche en haut de l'écran des invocations. Vous pouvez rechercher par titre, texte arabe ou traduction.",
+      },
+      faq3: {
+        question: "Comment changer le mode sombre ?",
+        answer: "Allez dans Paramètres > Apparence et activez le mode sombre. Vous pouvez également choisir le mode automatique pour suivre les paramètres de votre appareil.",
+      },
+      faq4: {
+        question: "Comment naviguer entre les adkâr ?",
+        answer: "Sélectionnez une catégorie (matin, soir, après la prière), puis utilisez les boutons Précédent/Suivant pour naviguer entre les invocations.",
+      },
+      faq5: {
+        question: "Les invocations sont-elles authentiques ?",
+        answer: "Oui, toutes les invocations proviennent de sources authentiques (Coran, hadiths authentiques) et sont référencées avec leur source.",
+      },
       contact: "Contact",
       contactText: "Pour toute question ou suggestion, n'hésitez pas à nous contacter.",
       sendEmail: "Envoyer un email",
       about: "À propos",
-      aboutText: "Sakīnah est une application dédiée aux invocations et adkâr islamiques. Notre objectif est de faciliter l'accès aux invocations authentiques et de vous aider à les intégrer dans votre quotidien.",
+      aboutText: "est une application dédiée aux invocations et adkâr islamiques. Notre objectif est de faciliter l'accès aux invocations authentiques et de vous aider à les intégrer dans votre quotidien.",
       back: "Retour",
     },
     counter: {
@@ -203,11 +223,31 @@ export const translations = {
       title: "المساعدة والدعم",
       subtitle: "الأسئلة الشائعة والمساعدة",
       faq: "الأسئلة الشائعة",
+      faq1: {
+        question: "كيف أضيف دعاء إلى المفضلة؟",
+        answer: "عندما تتصفح دعاء، انقر على أيقونة النجمة في الرأس أو في بطاقة الدعاء لإضافتها إلى المفضلة.",
+      },
+      faq2: {
+        question: "كيف أبحث عن دعاء؟",
+        answer: "استخدم شريط البحث في أعلى شاشة الأدعية. يمكنك البحث بالعنوان أو النص العربي أو الترجمة.",
+      },
+      faq3: {
+        question: "كيف أغير الوضع الداكن؟",
+        answer: "اذهب إلى الإعدادات > المظهر وقم بتفعيل الوضع الداكن. يمكنك أيضاً اختيار الوضع التلقائي لمتابعة إعدادات جهازك.",
+      },
+      faq4: {
+        question: "كيف أتنقل بين الأذكار؟",
+        answer: "اختر فئة (صباح، مساء، بعد الصلاة)، ثم استخدم أزرار السابق/التالي للتنقل بين الأدعية.",
+      },
+      faq5: {
+        question: "هل الأدعية أصلية؟",
+        answer: "نعم، جميع الأدعية من مصادر أصلية (القرآن، الأحاديث الصحيحة) ويتم الإشارة إلى مصدرها.",
+      },
       contact: "اتصل بنا",
       contactText: "لأي سؤال أو اقتراح، لا تتردد في الاتصال بنا.",
       sendEmail: "إرسال بريد إلكتروني",
       about: "حول",
-      aboutText: "سكينة هو تطبيق مخصص للأدعية والأذكار الإسلامية. هدفنا هو تسهيل الوصول إلى الأدعية الأصيلة ومساعدتك على دمجها في حياتك اليومية.",
+      aboutText: "هو تطبيق مخصص للأدعية والأذكار الإسلامية. هدفنا هو تسهيل الوصول إلى الأدعية الأصيلة ومساعدتك على دمجها في حياتك اليومية.",
       back: "رجوع",
     },
     counter: {
@@ -315,11 +355,31 @@ export const translations = {
       title: "Help and Support",
       subtitle: "Frequently asked questions and assistance",
       faq: "Frequently asked questions",
+      faq1: {
+        question: "How do I add an invocation to favorites?",
+        answer: "When viewing an invocation, click on the star icon in the header or in the invocation card to add it to your favorites.",
+      },
+      faq2: {
+        question: "How do I search for an invocation?",
+        answer: "Use the search bar at the top of the invocations screen. You can search by title, Arabic text, or translation.",
+      },
+      faq3: {
+        question: "How do I change dark mode?",
+        answer: "Go to Settings > Appearance and enable dark mode. You can also choose automatic mode to follow your device settings.",
+      },
+      faq4: {
+        question: "How do I navigate between adkâr?",
+        answer: "Select a category (morning, evening, after prayer), then use the Previous/Next buttons to navigate between invocations.",
+      },
+      faq5: {
+        question: "Are the invocations authentic?",
+        answer: "Yes, all invocations come from authentic sources (Quran, authentic hadiths) and are referenced with their source.",
+      },
       contact: "Contact",
       contactText: "For any questions or suggestions, feel free to contact us.",
       sendEmail: "Send email",
       about: "About",
-      aboutText: "Sakīnah is an application dedicated to Islamic invocations and adkâr. Our goal is to facilitate access to authentic invocations and help you integrate them into your daily life.",
+      aboutText: "is an application dedicated to Islamic invocations and adkâr. Our goal is to facilitate access to authentic invocations and help you integrate them into your daily life.",
       back: "Back",
     },
     counter: {

@@ -19,7 +19,7 @@ function RootLayoutNav() {
       headerTintColor: colors.textPrimary,
       headerTitleAlign: "center",
     });
-  }, [navigation, colors, language, t]);
+  }, [navigation, colors, language]);
 
   return (
     <>
@@ -38,15 +38,42 @@ function RootLayoutNav() {
             headerRight: undefined, // Sera défini dans le composant
           }} 
         />
-        <Stack.Screen name="adkar/index" options={{ title: t("adkar.title") }} />
-        <Stack.Screen name="dua/index" options={{ title: t("dua.title") }} />
-        <Stack.Screen name="settings/favorites" options={{ title: t("favorites.title") }} />
-        <Stack.Screen name="dua/onboarding" options={{ title: t("onboarding.title") }} />
-        <Stack.Screen name="settings/settings" options={{ title: t("settings.title") }} />
-        <Stack.Screen name="settings/language" options={{ title: t("language.title") }} />
-        <Stack.Screen name="settings/textSize" options={{ title: t("textSize.title") }} />
-        <Stack.Screen name="settings/help" options={{ title: t("help.title") }} />
-        <Stack.Screen name="counter" options={{ title: t("counter.title") }} />
+        <Stack.Screen 
+          name="adkar/index" 
+          options={{ title: t("adkar.title") }} 
+        />
+        <Stack.Screen 
+          name="dua/index" 
+          options={{ title: t("dua.title") }} 
+        />
+        <Stack.Screen 
+          name="settings/favorites" 
+          options={{ title: t("favorites.title") }} 
+        />
+        <Stack.Screen 
+          name="dua/onboarding" 
+          options={{ title: t("onboarding.title") }} 
+        />
+        <Stack.Screen 
+          name="settings/settings" 
+          options={{ title: t("settings.title") }} 
+        />
+        <Stack.Screen 
+          name="settings/language" 
+          options={{ title: t("language.title") }} 
+        />
+        <Stack.Screen 
+          name="settings/textSize" 
+          options={{ title: t("textSize.title") }} 
+        />
+        <Stack.Screen 
+          name="settings/help" 
+          options={{ title: t("help.title") }} 
+        />
+        <Stack.Screen 
+          name="counter" 
+          options={{ title: t("counter.title") }} 
+        />
       </Stack>
     </>
   );

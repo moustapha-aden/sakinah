@@ -13,11 +13,14 @@ const TranslationContext = createContext<TranslationContextType | undefined>(
 
 export function TranslationProvider({ children }: { children: ReactNode }) {
   const { settings } = useSettings();
-  const lang = settings.language || "fr";
-  const langTranslations = translations[lang] || translations.fr;
+  // Extraire directement language pour forcer la réactivité
+  // Utiliser settings.language directement dans useMemo pour garantir la réactivité
+  const lang: string = useMemo(() => settings.language || "fr", [settings.language]);
 
   // Mémoriser la fonction t pour qu'elle se mette à jour quand la langue change
   const t = useMemo(() => {
+    const langTranslations = translations[lang as keyof typeof translations] || translations.fr;
+    
     return (key: string): string => {
       const keys = key.split(".");
       let value: any = langTranslations;
@@ -41,7 +44,7 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 
       return typeof value === "string" ? value : key;
     };
-  }, [lang, langTranslations]);
+  }, [lang]); // Dépendre directement de lang qui change quand settings.language change
 
   const value = useMemo(() => ({ t, language: lang }), [t, lang]);
 
