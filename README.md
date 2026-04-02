@@ -222,7 +222,7 @@ Ce projet est privé et destiné à un usage personnel.
 ## 📞 Support
 
 Pour toute question ou suggestion :
-- Email : support@sakinah.app
+- Email : moustaphaaden232020@gmail.com
 - Consultez la section **Aide** dans l'application
 
 ---
