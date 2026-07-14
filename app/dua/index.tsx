@@ -8,9 +8,17 @@ import {
   TextInput,
   Pressable,
   Modal,
+  Share,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from "react-native";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useState, useRef, useMemo, useLayoutEffect, useEffect } from "react";
+
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useTranslation } from "../../contexts/TranslationContext";
@@ -120,7 +128,15 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
     }
   };
 
-  // Configurer le header avec le menu et le bouton favori
+  const handleShare = (dua: (typeof duas)[number]) => {
+    if (analytics && analytics.logEvent) {
+      analytics.logEvent("share_dua", { dua_id: dua.id, category: dua.category });
+    }
+    const parts = [dua.title, dua.arabic, dua.translation, dua.source ? `— ${dua.source}` : ""].filter(Boolean);
+    Share.share({ message: parts.join("\n\n") });
+  };
+
+  // Configurer le header avec le menu, le partage et le bouton favori
   useLayoutEffect(() => {
     const selectedDua = selectedDuaIndex !== null ? filteredDuas[selectedDuaIndex] : null;
     const isDuaFavorite = selectedDua ? isFavorite(selectedDua.id) : false;
@@ -129,16 +145,24 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
       headerRight: () => (
         <View style={styles.headerButtons}>
           {selectedDuaIndex !== null && selectedDua && (
-            <TouchableOpacity
-              onPress={() => toggleFavorite(selectedDua.id)}
-              style={styles.favoriteButton}
-            >
-              <Ionicons
-                name={isDuaFavorite ? "star" : "star-outline"}
-                size={24}
-                color={isDuaFavorite ? colors.accent : colors.textPrimary}
-              />
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity
+                onPress={() => handleShare(selectedDua)}
+                style={styles.favoriteButton}
+              >
+                <Ionicons name="share-social-outline" size={22} color={colors.textPrimary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => toggleFavorite(selectedDua.id)}
+                style={styles.favoriteButton}
+              >
+                <Ionicons
+                  name={isDuaFavorite ? "star" : "star-outline"}
+                  size={24}
+                  color={isDuaFavorite ? colors.accent : colors.textPrimary}
+                />
+              </TouchableOpacity>
+            </>
           )}
           <TouchableOpacity
             onPress={() => setMenuVisible(true)}
@@ -156,17 +180,102 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
   const handleDuaSelect = (index: number) => {
     const selectedDua = filteredDuas[index];
     if (analytics && analytics.logEvent && selectedDua) {
-      analytics.logEvent("view_dua", { 
+      analytics.logEvent("view_dua", {
         dua_id: selectedDua.id,
-        category: selectedDua.category 
+        category: selectedDua.category
       });
     }
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setSelectedDuaIndex(index);
   };
 
   const handleBackToList = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setSelectedDuaIndex(null);
   };
+
+  const handleSearchChange = (text: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setSearchQuery(text);
+  };
+
+  // Menu partagé entre la vue liste et la vue détail (évite la duplication de JSX/textes en dur)
+  const menuModal = (
+    <Modal
+      visible={menuVisible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={() => setMenuVisible(false)}
+    >
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setMenuVisible(false)}
+      >
+        <View style={styles.menuContainer}>
+          <View style={styles.menuHeader}>
+            <Text style={styles.menuTitle}>{t("menu.title")}</Text>
+            <TouchableOpacity
+              onPress={() => setMenuVisible(false)}
+              style={styles.closeButton}
+            >
+              <Ionicons name="close" size={24} color={colors.textPrimary} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.menuItems}>
+            <Pressable
+              style={styles.menuItem}
+              onPress={() => handleMenuAction("favorites")}
+            >
+              <View style={styles.menuItemContent}>
+                <Ionicons
+                  name="star"
+                  size={24}
+                  color={colors.accent}
+                  style={styles.menuItemIcon}
+                />
+                <View style={styles.menuItemText}>
+                  <Text style={styles.menuItemTitle}>{t("menu.favorites")}</Text>
+                  <Text style={styles.menuItemSubtitle}>
+                    {t("menu.favoritesSubtitle")}
+                  </Text>
+                </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </View>
+            </Pressable>
+            <Pressable
+              style={styles.menuItem}
+              onPress={() => handleMenuAction("settings")}
+            >
+              <View style={styles.menuItemContent}>
+                <Ionicons
+                  name="settings"
+                  size={24}
+                  color={colors.accent}
+                  style={styles.menuItemIcon}
+                />
+                <View style={styles.menuItemText}>
+                  <Text style={styles.menuItemTitle}>{t("menu.settings")}</Text>
+                  <Text style={styles.menuItemSubtitle}>
+                    {t("menu.settingsSubtitle")}
+                  </Text>
+                </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </View>
+            </Pressable>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
 
   // Vue détail : afficher uniquement le dua sélectionné
   if (selectedDuaIndex !== null) {
@@ -178,81 +287,7 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
 
     return (
       <View style={styles.container}>
-        {/* Menu Modal - accessible aussi dans la vue détail */}
-        <Modal
-          visible={menuVisible}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setMenuVisible(false)}
-        >
-          <TouchableOpacity
-            style={styles.modalOverlay}
-            activeOpacity={1}
-            onPress={() => setMenuVisible(false)}
-          >
-            <View style={styles.menuContainer}>
-              <View style={styles.menuHeader}>
-                <Text style={styles.menuTitle}>{t("menu.title")}</Text>
-                <TouchableOpacity
-                  onPress={() => setMenuVisible(false)}
-                  style={styles.closeButton}
-                >
-                  <Ionicons name="close" size={24} color={colors.textPrimary} />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.menuItems}>
-                <Pressable
-                  style={styles.menuItem}
-                  onPress={() => handleMenuAction("favorites")}
-                >
-                  <View style={styles.menuItemContent}>
-                    <Ionicons
-                      name="star"
-                      size={24}
-                      color={colors.accent}
-                      style={styles.menuItemIcon}
-                    />
-                    <View style={styles.menuItemText}>
-                      <Text style={styles.menuItemTitle}>{t("menu.favorites")}</Text>
-                      <Text style={styles.menuItemSubtitle}>
-                        {t("menu.favoritesSubtitle")}
-                      </Text>
-                    </View>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={20}
-                      color={colors.textSecondary}
-                    />
-                  </View>
-                </Pressable>
-                <Pressable
-                  style={styles.menuItem}
-                  onPress={() => handleMenuAction("settings")}
-                >
-                  <View style={styles.menuItemContent}>
-                    <Ionicons
-                      name="settings"
-                      size={24}
-                      color={colors.accent}
-                      style={styles.menuItemIcon}
-                    />
-                    <View style={styles.menuItemText}>
-                      <Text style={styles.menuItemTitle}>{t("menu.settings")}</Text>
-                      <Text style={styles.menuItemSubtitle}>
-                        {t("menu.settingsSubtitle")}
-                      </Text>
-                    </View>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={20}
-                      color={colors.textSecondary}
-                    />
-                  </View>
-                </Pressable>
-              </View>
-            </View>
-          </TouchableOpacity>
-        </Modal>
+        {menuModal}
 
         <ScrollView
           style={styles.detailScrollView}
@@ -340,81 +375,7 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
   // Vue liste : afficher tous les titres avec recherche
   return (
     <View style={styles.container}>
-      {/* Menu Modal */}
-      <Modal
-        visible={menuVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setMenuVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setMenuVisible(false)}
-        >
-          <View style={styles.menuContainer}>
-            <View style={styles.menuHeader}>
-              <Text style={styles.menuTitle}>Menu</Text>
-              <TouchableOpacity
-                onPress={() => setMenuVisible(false)}
-                style={styles.closeButton}
-              >
-                <Ionicons name="close" size={24} color={colors.textPrimary} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.menuItems}>
-              <Pressable
-                style={styles.menuItem}
-                onPress={() => handleMenuAction("favorites")}
-              >
-                <View style={styles.menuItemContent}>
-                  <Ionicons
-                    name="star"
-                    size={24}
-                    color={colors.accent}
-                    style={styles.menuItemIcon}
-                  />
-                  <View style={styles.menuItemText}>
-                    <Text style={styles.menuItemTitle}>Favoris</Text>
-                    <Text style={styles.menuItemSubtitle}>
-                      Mes invocations favorites
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={20}
-                    color={colors.textSecondary}
-                  />
-                </View>
-              </Pressable>
-              <Pressable
-                style={styles.menuItem}
-                onPress={() => handleMenuAction("settings")}
-              >
-                <View style={styles.menuItemContent}>
-                  <Ionicons
-                    name="settings"
-                    size={24}
-                    color={colors.accent}
-                    style={styles.menuItemIcon}
-                  />
-                  <View style={styles.menuItemText}>
-                    <Text style={styles.menuItemTitle}>Paramètres</Text>
-                    <Text style={styles.menuItemSubtitle}>
-                      Préférences et configuration
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={20}
-                    color={colors.textSecondary}
-                  />
-                </View>
-              </Pressable>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+      {menuModal}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
           <MaterialIcons
@@ -428,11 +389,11 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
             placeholder={t("dua.search")}
             placeholderTextColor={colors.textSecondary}
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={handleSearchChange}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity
-              onPress={() => setSearchQuery("")}
+              onPress={() => handleSearchChange("")}
               style={styles.clearButton}
             >
               <Ionicons
@@ -461,7 +422,7 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
               return (
                 <Pressable
                   key={dua.id}
-                  style={({ pressed }) => [
+                  style={({ pressed }: { pressed: boolean }) => [
                     styles.duaItem,
                     pressed && styles.duaItemPressed,
                   ]}

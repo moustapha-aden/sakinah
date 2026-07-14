@@ -3,7 +3,7 @@ import { useMemo, useRef, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import AppButton from "../components/AppButton";
-import { useTasbih } from "../hooks/useTasbih";
+import { useTasbih, TARGET_OPTIONS } from "../hooks/useTasbih";
 import { useTheme } from "../contexts/ThemeContext";
 import { useTranslation } from "../contexts/TranslationContext";
 import { useSettings } from "../hooks/useSettings";
@@ -16,7 +16,8 @@ export default function tasbihScreen() {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
-  const { count, increment, reset } = useTasbih();
+  const { dhikrList, counts, selected, setSelected, count, target, setTarget, increment, reset } = useTasbih();
+  const dhikrLabel = t(`tasbih.${dhikrList.find((d) => d.id === selected)?.translationKey || "subhanAllah"}`);
 
   useEffect(() => {
     if (analytics && analytics.logEvent) {
@@ -91,17 +92,17 @@ export default function tasbihScreen() {
 
     // Animation de la barre de progression
     Animated.timing(progressAnim, {
-      toValue: (count % 33) / 33,
+      toValue: (count % target) / target,
       duration: 300,
       useNativeDriver: false,
     }).start();
 
-    // Confetti animation pour les multiples de 33
-    if (count > 0 && count % 33 === 0) {
+    // Confetti animation quand l'objectif est atteint
+    if (count > 0 && count % target === 0) {
       triggerConfetti();
       Vibration.vibrate([0, 100, 50, 100]);
     }
-  }, [count]);
+  }, [count, target, selected]);
 
   // Animation de pulse continue
   useEffect(() => {
@@ -185,9 +186,9 @@ export default function tasbihScreen() {
     outputRange: ['0%', '100%'],
   });
 
-  const milestone = Math.floor(count / 33) * 33;
-  const nextMilestone = milestone + 33;
-  const progress = count % 33;
+  const milestone = Math.floor(count / target) * target;
+  const nextMilestone = milestone + target;
+  const progress = count % target;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -220,6 +221,32 @@ export default function tasbihScreen() {
         <Ionicons name="finger-print" size={getTextSize(32, settings.textSize)} color={colors.accent} />
         <Text style={styles.headerText}>{t("tasbih.title")}</Text>
       </View>
+
+      {/* Sélecteur de dhikr */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.dhikrSelector}
+        contentContainerStyle={styles.dhikrSelectorContent}
+      >
+        {dhikrList.map((dhikr) => {
+          const isActive = dhikr.id === selected;
+          return (
+            <Pressable
+              key={dhikr.id}
+              onPress={() => setSelected(dhikr.id)}
+              style={[styles.dhikrChip, isActive && styles.dhikrChipActive]}
+            >
+              <Text style={[styles.dhikrChipText, isActive && styles.dhikrChipTextActive]}>
+                {t(`tasbih.${dhikr.translationKey}`)}
+              </Text>
+              <Text style={[styles.dhikrChipBadge, isActive && styles.dhikrChipBadgeActive]}>
+                {counts[dhikr.id] || 0}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
       {/* Cercle de progression */}
       <Animated.View
@@ -262,20 +289,48 @@ export default function tasbihScreen() {
         </Animated.View>
       </Animated.View>
 
+      {/* Sélecteur d'objectif */}
+      <View style={styles.targetSelector}>
+        <Text style={styles.targetLabel}>{t("tasbih.chooseTarget")}</Text>
+        <View style={styles.targetOptions}>
+          {TARGET_OPTIONS.map((option) => (
+            <Pressable
+              key={option}
+              onPress={() => setTarget(option)}
+              style={[styles.targetPill, target === option && styles.targetPillActive]}
+            >
+              <Text
+                style={[
+                  styles.targetPillText,
+                  target === option && styles.targetPillTextActive,
+                ]}
+              >
+                {option}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
       {/* Barre de progression vers le prochain jalon */}
       <View style={styles.milestoneContainer}>
         <View style={styles.milestoneHeader}>
           <View style={styles.milestoneInfo}>
             <Ionicons name="trophy" size={getTextSize(20, settings.textSize)} color={colors.accent} />
             <Text style={styles.milestoneText}>
-              {t("tasbih.progress").replace("{progress}", progress.toString()).replace("{nextMilestone}", nextMilestone.toString())}
+              {t("tasbih.progress")
+                .replace("{progress}", progress.toString())
+                .replace("{nextMilestone}", nextMilestone.toString())
+                .replace("{target}", target.toString())}
             </Text>
           </View>
           <Text style={styles.milestoneCount}>
-            {t("tasbih.seriesCount").replace("{count}", Math.floor(count / 33).toString())}
+            {t("tasbih.seriesCount")
+              .replace("{count}", Math.floor(count / target).toString())
+              .replace("{target}", target.toString())}
           </Text>
         </View>
-        
+
         <View style={styles.progressBarContainer}>
           <Animated.View
             style={[
@@ -299,7 +354,7 @@ export default function tasbihScreen() {
 
         <View style={styles.statBox}>
           <Ionicons name="star" size={getTextSize(24, settings.textSize)} color="#FFD700" />
-          <Text style={styles.statNumber}>{Math.floor(count / 33)}</Text>
+          <Text style={styles.statNumber}>{Math.floor(count / target)}</Text>
           <Text style={styles.statLabel}>{t("tasbih.series")}</Text>
         </View>
       </View>
@@ -308,7 +363,7 @@ export default function tasbihScreen() {
       <View style={styles.buttonsContainer}>
         <Pressable
           onPress={handleIncrement}
-          style={({ pressed }) => [
+          style={({ pressed }: { pressed: boolean }) => [
             styles.incrementButton,
             pressed && styles.buttonPressed,
           ]}
@@ -320,13 +375,13 @@ export default function tasbihScreen() {
             end={{ x: 1, y: 1 }}
           >
             <Ionicons name="add" size={getTextSize(48, settings.textSize)} color="#FFFFFF" />
-            <Text style={styles.incrementButtonText}>{t("tasbih.subhanAllah")}</Text>
+            <Text style={styles.incrementButtonText}>{dhikrLabel}</Text>
           </LinearGradient>
         </Pressable>
 
         <Pressable
           onPress={handleReset}
-          style={({ pressed }) => [
+          style={({ pressed }: { pressed: boolean }) => [
             styles.resetButton,
             pressed && styles.buttonPressed,
           ]}
@@ -369,6 +424,105 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     fontSize: getTextSize(24, textSize),
     fontWeight: "700",
     color: colors.textPrimary,
+  },
+
+  // Sélecteur de dhikr
+  dhikrSelector: {
+    marginBottom: getResponsiveMargin(20),
+    width: "100%",
+    flexGrow: 0,
+  },
+
+  dhikrSelectorContent: {
+    gap: 10,
+    paddingHorizontal: 2,
+  },
+
+  dhikrChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+
+  dhikrChipActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+
+  dhikrChipText: {
+    fontSize: getTextSize(14, textSize),
+    fontWeight: "600",
+    color: colors.textPrimary,
+  },
+
+  dhikrChipTextActive: {
+    color: "#FFFFFF",
+  },
+
+  dhikrChipBadge: {
+    fontSize: getTextSize(12, textSize),
+    fontWeight: "700",
+    color: colors.textSecondary,
+    backgroundColor: colors.background,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    overflow: "hidden",
+  },
+
+  dhikrChipBadgeActive: {
+    color: colors.accent,
+    backgroundColor: "#FFFFFF",
+  },
+
+  // Sélecteur d'objectif
+  targetSelector: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: getResponsiveMargin(16),
+  },
+
+  targetLabel: {
+    fontSize: getTextSize(13, textSize),
+    color: colors.textSecondary,
+    fontWeight: "600",
+  },
+
+  targetOptions: {
+    flexDirection: "row",
+    gap: 8,
+  },
+
+  targetPill: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+
+  targetPillActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+
+  targetPillText: {
+    fontSize: getTextSize(13, textSize),
+    fontWeight: "700",
+    color: colors.textPrimary,
+  },
+
+  targetPillTextActive: {
+    color: "#FFFFFF",
   },
 
   // Confetti

@@ -1,9 +1,16 @@
 import React, { createContext, useContext, ReactNode, useState, useEffect, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { COMPLETED_CATEGORIES_KEY } from "../constants/storageKeys";
+import { adkarCategories } from "../data/categories";
 
 const STATS_KEY = "@sakinah_stats";
 const LAST_ADKAR_DATE_KEY = "@sakinah_last_adkar_date";
 const STREAK_START_DATE_KEY = "@sakinah_streak_start_date";
+
+export interface DayHistory {
+  date: string;
+  count: number;
+}
 
 interface Stats {
   streakDays: number;
@@ -25,6 +32,7 @@ interface StatsContextType {
   recordAdkarCompletion: () => Promise<void>;
   resetStats: () => Promise<void>;
   refreshStats: () => Promise<void>;
+  getWeeklyHistory: () => Promise<DayHistory[]>;
 }
 
 const StatsContext = createContext<StatsContextType | undefined>(undefined);
@@ -208,6 +216,33 @@ export function StatsProvider({ children }: { children: ReactNode }) {
     await loadStats();
   }, [loadStats]);
 
+  // Relit les clés déjà écrites par l'écran adkar/[category] pour reconstruire
+  // combien de catégories ont été complétées sur les 7 derniers jours,
+  // sans avoir besoin d'un nouveau schéma de stockage.
+  const getWeeklyHistory = useCallback(async (): Promise<DayHistory[]> => {
+    try {
+      const categoryIds = adkarCategories.map((cat) => cat.id);
+      const days: DayHistory[] = [];
+
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toDateString();
+        const keys = categoryIds.map(
+          (catId) => `${COMPLETED_CATEGORIES_KEY}_${catId}_${dateStr}`
+        );
+        const entries = await AsyncStorage.multiGet(keys);
+        const count = entries.filter(([, value]) => value === "true").length;
+        days.push({ date: dateStr, count });
+      }
+
+      return days;
+    } catch (error) {
+      console.error("Error loading weekly history:", error);
+      return [];
+    }
+  }, []);
+
   return (
     <StatsContext.Provider
       value={{
@@ -216,6 +251,7 @@ export function StatsProvider({ children }: { children: ReactNode }) {
         recordAdkarCompletion,
         resetStats,
         refreshStats,
+        getWeeklyHistory,
       }}
     >
       {children}

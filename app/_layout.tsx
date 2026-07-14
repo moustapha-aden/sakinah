@@ -1,16 +1,28 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 import { SettingsProvider } from "../contexts/SettingsContext";
 import { TranslationProvider, useTranslation } from "../contexts/TranslationContext";
 import { StatsProvider } from "../contexts/StatsContext";
 import { useNavigation } from "expo-router";
+import { useSettings } from "../hooks/useSettings";
+import { useNotifications } from "../hooks/useNotifications";
 
 function RootLayoutNav() {
   const { colors, theme } = useTheme();
   const { t, language } = useTranslation();
   const navigation = useNavigation();
+  const { settings, loading: settingsLoading } = useSettings();
+  const { scheduleDailyReminders } = useNotifications();
+
+  // Reprogrammer les rappels au démarrage si l'utilisateur les avait activés
+  // (ils peuvent être perdus après une réinstallation ou un redémarrage de l'appareil)
+  useEffect(() => {
+    if (!settingsLoading && settings.notifications) {
+      scheduleDailyReminders(settings.language);
+    }
+  }, [settingsLoading, settings.notifications, settings.language, scheduleDailyReminders]);
 
   // Mettre à jour les titres des écrans quand la langue change
   useLayoutEffect(() => {

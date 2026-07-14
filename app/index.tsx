@@ -31,21 +31,36 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const { t, language } = useTranslation();
   const { settings } = useSettings();
-  const { stats, loading: statsLoading, refreshStats } = useStats();
+  const { stats, loading: statsLoading, refreshStats, getWeeklyHistory } = useStats();
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+  const [weeklyHistory, setWeeklyHistory] = useState<{ date: string; count: number }[]>([]);
 
   // Recharger les stats quand l'écran est focus
   useFocusEffect(
     useCallback(() => {
       refreshStats();
+      getWeeklyHistory().then(setWeeklyHistory);
       if (analytics && analytics.logEvent) {
         analytics.logEvent("open_home");
       }
-    }, [refreshStats])
+    }, [refreshStats, getWeeklyHistory])
   );
-  
+
+  // Animations en cascade des barres d'historique hebdomadaire
+  const historyAnims = useRef(Array.from({ length: 7 }, () => new Animated.Value(0))).current;
+  useEffect(() => {
+    if (weeklyHistory.length > 0) {
+      Animated.stagger(
+        60,
+        historyAnims.map((anim) =>
+          Animated.spring(anim, { toValue: 1, tension: 50, friction: 7, useNativeDriver: true })
+        )
+      ).start();
+    }
+  }, [weeklyHistory]);
+
   // Animations refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const titleScale = useRef(new Animated.Value(0.8)).current;
@@ -304,6 +319,60 @@ export default function HomeScreen() {
           </View>
         </Animated.View>
 
+        {/* HISTORIQUE DE LA SEMAINE */}
+        {weeklyHistory.length > 0 && (
+          <View style={styles.weeklySection}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="calendar" size={22} color={colors.accent} />
+              <Text style={styles.sectionTitle}>{t("home.weeklyHistory")}</Text>
+            </View>
+            <View style={styles.weeklyRow}>
+              {weeklyHistory.map((day, index) => {
+                const ratio = day.count / 3;
+                const weekdayLabel = new Date(day.date).toLocaleDateString(
+                  language === "ar" ? "ar" : language === "en" ? "en-US" : "fr-FR",
+                  { weekday: "short" }
+                );
+                const isToday = day.date === new Date().toDateString();
+                return (
+                  <Animated.View
+                    key={day.date}
+                    style={[
+                      styles.weeklyDayColumn,
+                      {
+                        opacity: historyAnims[index],
+                        transform: [
+                          {
+                            translateY: historyAnims[index].interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [16, 0],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}
+                  >
+                    <View style={styles.weeklyBarTrack}>
+                      <View
+                        style={[
+                          styles.weeklyBarFill,
+                          {
+                            height: `${Math.max(ratio * 100, day.count > 0 ? 12 : 0)}%`,
+                            backgroundColor: day.count > 0 ? colors.accent : colors.border,
+                          },
+                        ]}
+                      />
+                    </View>
+                    <Text style={[styles.weeklyDayLabel, isToday && styles.weeklyDayLabelToday]}>
+                      {weekdayLabel}
+                    </Text>
+                  </Animated.View>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
         {/* BOUTONS PRINCIPAUX */}
         <View style={styles.buttonsContainer}>
           <Animated.View
@@ -527,6 +596,55 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 4,
     textAlign: "center",
+  },
+
+  // HISTORIQUE DE LA SEMAINE
+  weeklySection: {
+    marginBottom: getResponsiveMargin(20),
+  },
+
+  weeklyRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: colors.card,
+    borderRadius: getResponsiveSize(16),
+    padding: getResponsivePadding(16),
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+
+  weeklyDayColumn: {
+    alignItems: "center",
+    gap: 6,
+    flex: 1,
+  },
+
+  weeklyBarTrack: {
+    width: 10,
+    height: 56,
+    borderRadius: 5,
+    backgroundColor: colors.background,
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+
+  weeklyBarFill: {
+    width: "100%",
+    borderRadius: 5,
+  },
+
+  weeklyDayLabel: {
+    fontSize: getTextSize(11, textSize),
+    color: colors.textSecondary,
+    textTransform: "capitalize",
+  },
+
+  weeklyDayLabelToday: {
+    color: colors.accent,
+    fontWeight: "700",
   },
 
   // BOUTONS

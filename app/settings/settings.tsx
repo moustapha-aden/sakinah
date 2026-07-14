@@ -6,21 +6,52 @@ import {
   Switch,
   TouchableOpacity,
   Pressable,
+  Alert,
 } from "react-native";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { router } from "expo-router";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useTranslation } from "../../contexts/TranslationContext";
 import { useSettings } from "../../hooks/useSettings";
 import { getTextSize } from "../../utils/textSize";
+import { useNotifications } from "../../hooks/useNotifications";
 
 export default function SettingsScreen() {
   const { colors, theme, themeMode, setThemeMode } = useTheme();
   const { t, language } = useTranslation();
-  const { settings, setLanguage, setTextSize } = useSettings();
+  const { settings, setLanguage, setTextSize, setNotifications } = useSettings();
+  const { requestPermission, scheduleDailyReminders, cancelAll, sendTestNotification } = useNotifications();
+  const [notifBusy, setNotifBusy] = useState(false);
 
   const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
+
+  const handleToggleNotifications = async (value: boolean) => {
+    setNotifBusy(true);
+    try {
+      if (value) {
+        const granted = await requestPermission();
+        if (!granted) {
+          Alert.alert(
+            t("settings.notificationPermissionTitle"),
+            t("settings.notificationPermissionMessage")
+          );
+          return;
+        }
+        await scheduleDailyReminders(settings.language);
+        setNotifications(true);
+      } else {
+        await cancelAll();
+        setNotifications(false);
+      }
+    } finally {
+      setNotifBusy(false);
+    }
+  };
+
+  const handleTestNotification = () => {
+    sendTestNotification(settings.language);
+  };
 
   const getLanguageName = (code: string) => {
     const languages: { [key: string]: string } = {
@@ -51,9 +82,9 @@ export default function SettingsScreen() {
           <View style={styles.iconContainer}>
             <Ionicons name="settings" size={32} color={colors.accent} />
           </View>
-          <Text style={styles.title}>Paramètres</Text>
+          <Text style={styles.title}>{t("settings.title")}</Text>
           <Text style={styles.subtitle}>
-            Personnalisez votre expérience
+            {t("settings.subtitle")}
           </Text>
         </View>
 
@@ -127,6 +158,47 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t("settings.preferences")}</Text>
           <View style={styles.optionsContainer}>
+            <View style={styles.optionItem}>
+              <View style={styles.optionLeft}>
+                <Ionicons
+                  name="notifications"
+                  size={24}
+                  color={colors.accent}
+                  style={styles.optionIcon}
+                />
+                <View style={styles.optionText}>
+                  <Text style={styles.optionLabel}>{t("settings.notifications")}</Text>
+                  <Text style={styles.optionDescription}>
+                    {t("settings.notificationsDesc")}
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={settings.notifications}
+                onValueChange={handleToggleNotifications}
+                disabled={notifBusy}
+                trackColor={{ false: colors.border, true: colors.accent }}
+                thumbColor={colors.card}
+              />
+            </View>
+
+            {settings.notifications && (
+              <Pressable style={styles.optionItem} onPress={handleTestNotification}>
+                <View style={styles.optionLeft}>
+                  <Ionicons
+                    name="paper-plane"
+                    size={24}
+                    color={colors.accent}
+                    style={styles.optionIcon}
+                  />
+                  <View style={styles.optionText}>
+                    <Text style={styles.optionLabel}>{t("settings.testNotification")}</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+              </Pressable>
+            )}
+
             <Pressable
               style={styles.optionItem}
               onPress={() => router.push("/settings/language")}

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, GestureResponderEvent } from "react-native";
 import { router, useNavigation } from "expo-router";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useState, useEffect, useLayoutEffect, useMemo } from "react";
@@ -62,9 +62,9 @@ export default function DuaFavoritesScreen() {
           <View style={styles.iconContainer}>
             <Ionicons name="star" size={32} color={colors.accent} />
           </View>
-          <Text style={styles.title}>Mes Favoris</Text>
+          <Text style={styles.title}>{t("favorites.title")}</Text>
           <Text style={styles.subtitle}>
-            Retrouvez toutes vos invocations favorites
+            {t("favorites.subtitle")}
           </Text>
         </View>
 
@@ -128,7 +128,7 @@ export default function DuaFavoritesScreen() {
                     </View>
                     <Pressable
                       style={styles.removeButton}
-                      onPress={(e) => {
+                      onPress={(e: GestureResponderEvent) => {
                         e.stopPropagation();
                         removeFavorite(favorite.id);
                       }}

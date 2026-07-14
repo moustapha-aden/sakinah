@@ -1,12 +1,38 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, Animated } from "react-native";
 import { router } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useRef } from "react";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useTranslation } from "../../contexts/TranslationContext";
 import { useSettings } from "../../hooks/useSettings";
 import { getTextSize } from "../../utils/textSize";
 import { analytics } from "../../lib/firebase";
+import { getResponsivePadding, getResponsiveMargin, getResponsiveSize, isSmallScreen } from "../../utils/responsive";
+
+const CATEGORIES = [
+  {
+    id: "morning",
+    icon: "wb-sunny" as const,
+    gradient: ["#FFB347", "#FF7E5F"],
+    nameKey: "adkar.morning",
+    nameFrKey: "adkar.morningFr",
+  },
+  {
+    id: "evening",
+    icon: "nights-stay" as const,
+    gradient: ["#6A85B6", "#3B4B78"],
+    nameKey: "adkar.evening",
+    nameFrKey: "adkar.eveningFr",
+  },
+  {
+    id: "after_prayer",
+    icon: "mosque" as const,
+    gradient: ["#3CBBB1", "#E6B65C"],
+    nameKey: "adkar.afterPrayer",
+    nameFrKey: "adkar.afterPrayerFr",
+  },
+];
 
 export default function AdkarScreen() {
   const { colors } = useTheme();
@@ -14,10 +40,18 @@ export default function AdkarScreen() {
   const { settings } = useSettings();
   const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
 
+  const cardAnims = useRef(CATEGORIES.map(() => new Animated.Value(0))).current;
+
   useEffect(() => {
     if (analytics && analytics.logEvent) {
       analytics.logEvent("open_adkar");
     }
+    Animated.stagger(
+      100,
+      cardAnims.map((anim) =>
+        Animated.spring(anim, { toValue: 1, tension: 50, friction: 8, useNativeDriver: true })
+      )
+    ).start();
   }, []);
 
   const handleCategoryPress = (categoryId: string) => {
@@ -34,83 +68,48 @@ export default function AdkarScreen() {
         <Text style={styles.subtitle}>{t("adkar.subtitle")}</Text>
 
         <View style={styles.categoriesContainer}>
-          <Pressable
-            onPress={() => handleCategoryPress("morning")}
-            style={({ pressed }) => [
-              styles.card,
-              pressed && styles.cardPressed,
-            ]}
-          >
-            <View style={styles.cardContent}>
-              <MaterialIcons
-                name="wb-sunny"
-                size={32}
-                color={colors.accent}
-                style={styles.cardIcon}
-              />
-                    <View style={styles.cardText}>
-                      <Text style={styles.nom_en_Arabe}>{t("adkar.morning")}</Text>
-                      <Text style={styles.nom_en_francais}>{t("adkar.morningFr")}</Text>
-                    </View>
-              <MaterialIcons
-                name="chevron-right"
-                size={24}
-                color={colors.textSecondary}
-              />
-            </View>
-          </Pressable>
-
-          <Pressable
-            onPress={() => handleCategoryPress("evening")}
-            style={({ pressed }) => [
-              styles.card,
-              pressed && styles.cardPressed,
-            ]}
-          >
-            <View style={styles.cardContent}>
-              <MaterialIcons
-                name="nights-stay"
-                size={32}
-                color={colors.accent}
-                style={styles.cardIcon}
-              />
-                    <View style={styles.cardText}>
-                      <Text style={styles.nom_en_Arabe}>{t("adkar.evening")}</Text>
-                      <Text style={styles.nom_en_francais}>{t("adkar.eveningFr")}</Text>
-                    </View>
-              <MaterialIcons
-                name="chevron-right"
-                size={24}
-                color={colors.textSecondary}
-              />
-            </View>
-          </Pressable>
-
-          <Pressable
-            onPress={() => handleCategoryPress("after_prayer")}
-            style={({ pressed }) => [
-              styles.card,
-              pressed && styles.cardPressed,
-            ]}
-          >
-            <View style={styles.cardContent}>
-              <MaterialIcons
-                name="mosque"
-                size={32}
-                color={colors.accent}
-                style={styles.cardIcon}
-              />
-                    <View style={styles.cardText}>
-                      <Text style={styles.nom_en_Arabe}>{t("adkar.afterPrayer")}</Text>
-                      <Text style={styles.nom_en_francais}>{t("adkar.afterPrayerFr")}</Text>
-                    </View>
-              <MaterialIcons
-                name="chevron-right"
-                size={24}
-                color={colors.textSecondary}
-              />
-            </View>
-          </Pressable>
+          {CATEGORIES.map((category, index) => (
+            <Animated.View
+              key={category.id}
+              style={{
+                opacity: cardAnims[index],
+                transform: [
+                  {
+                    translateY: cardAnims[index].interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [30, 0],
+                    }),
+                  },
+                ],
+              }}
+            >
+              <Pressable
+                onPress={() => handleCategoryPress(category.id)}
+                style={({ pressed }: { pressed: boolean }) => [
+                  styles.card,
+                  pressed && styles.cardPressed,
+                ]}
+              >
+                <View style={styles.cardContent}>
+                  <LinearGradient
+                    colors={category.gradient as [string, string]}
+                    style={styles.cardIconBadge}
+                  >
+                    <MaterialIcons name={category.icon} size={26} color="#FFFFFF" />
+                  </LinearGradient>
+                  <View style={styles.cardText}>
+                    <Text style={styles.nom_en_Arabe}>{t(category.nameKey)}</Text>
+                    <Text style={styles.nom_en_francais}>{t(category.nameFrKey)}</Text>
+                  </View>
+                  <MaterialIcons
+                    name="chevron-right"
+                    size={24}
+                    color={colors.textSecondary}
+                  />
+                </View>
+              </Pressable>
+            </Animated.View>
+          ))}
         </View>
       </View>
     </ScrollView>
@@ -152,7 +151,12 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  cardIcon: {
+  cardIconBadge: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 16,
   },
   cardText: {
@@ -185,4 +189,3 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     color: colors.textSecondary,
   },
 });
-

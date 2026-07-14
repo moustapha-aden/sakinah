@@ -5,6 +5,7 @@ import {
   Dimensions,
   ScrollView,
   TouchableOpacity,
+  Animated,
 } from "react-native";
 import { useState, useRef, useLayoutEffect, useMemo, useEffect, useCallback } from "react";
 import { useLocalSearchParams, router, useNavigation, useFocusEffect } from "expo-router";
@@ -18,6 +19,8 @@ import { adkar } from "../../data/adkar";
 import { adkarCategories } from "../../data/categories";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { analytics } from "../../lib/firebase";
+import { getResponsivePadding, getResponsiveMargin, getResponsiveSize, isSmallScreen } from "../../utils/responsive";
+import { COMPLETED_CATEGORIES_KEY } from "../../constants/storageKeys";
 
 const defaultStats = {
   streakDays: 0,
@@ -27,8 +30,6 @@ const defaultStats = {
 };
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-
-const COMPLETED_CATEGORIES_KEY = "@sakinah_completed_categories";
 
 export default function AdkarCategoryScreen() {
   const { colors } = useTheme();
@@ -64,6 +65,19 @@ export default function AdkarCategoryScreen() {
   const hasRecordedRef = useRef<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const categoryRef = useRef<string | null>(null);
+  const completePulse = useRef(new Animated.Value(1)).current;
+
+  // Pulsation douce du bouton "Terminé" pour attirer l'œil sur le dernier adkâr
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(completePulse, { toValue: 1.05, duration: 700, useNativeDriver: true }),
+        Animated.timing(completePulse, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
 
   // Réinitialiser le flag quand on change de catégorie
   useEffect(() => {
@@ -309,13 +323,15 @@ export default function AdkarCategoryScreen() {
                   
                   {/* Bouton Terminé visible uniquement sur le dernier adkâr */}
                   {isLastItem && (
-                    <TouchableOpacity
-                      style={styles.completeButton}
-                      onPress={handleComplete}
-                    >
-                      <Ionicons name="checkmark-circle" size={getTextSize(24, settings.textSize)} color="#FFFFFF" />
-                      <Text style={styles.completeButtonText}>{t("adkar.complete")}</Text>
-                    </TouchableOpacity>
+                    <Animated.View style={{ transform: [{ scale: completePulse }] }}>
+                      <TouchableOpacity
+                        style={styles.completeButton}
+                        onPress={handleComplete}
+                      >
+                        <Ionicons name="checkmark-circle" size={getTextSize(24, settings.textSize)} color="#FFFFFF" />
+                        <Text style={styles.completeButtonText}>{t("adkar.complete")}</Text>
+                      </TouchableOpacity>
+                    </Animated.View>
                   )}
                 </View>
               </ScrollView>

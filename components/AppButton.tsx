@@ -1,5 +1,5 @@
-import { TouchableOpacity, Text, StyleSheet } from "react-native";
-import { useMemo } from "react";
+import { Animated, Pressable, Text, StyleSheet } from "react-native";
+import { useMemo, useRef } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useSettings } from "../hooks/useSettings";
 import { getTextSize } from "../utils/textSize";
@@ -13,11 +13,26 @@ export default function AppButton({ title, onPress }: Props) {
   const { colors } = useTheme();
   const { settings } = useSettings();
   const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scale, { toValue: 0.96, useNativeDriver: true, speed: 40, bounciness: 6 }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 8 }).start();
+  };
 
   return (
-    <TouchableOpacity style={styles.button} onPress={onPress}>
-      <Text style={styles.text}>{title}</Text>
-    </TouchableOpacity>
+    <Pressable
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+    >
+      <Animated.View style={[styles.button, { transform: [{ scale }] }]}>
+        <Text style={styles.text}>{title}</Text>
+      </Animated.View>
+    </Pressable>
   );
 }
 
