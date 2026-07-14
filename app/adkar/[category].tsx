@@ -315,6 +315,11 @@ export default function AdkarCategoryScreen() {
                   <Text style={styles.categoryTitle}>{categoryTitle}</Text>
                   <Text style={styles.arabicText}>{item.arabic}</Text>
                   <Text style={styles.translationText}>{item.translation}</Text>
+                  {"note" in item && item.note && (
+                    <View style={styles.noteBox}>
+                      <Text style={styles.noteText}>{item.note}</Text>
+                    </View>
+                  )}
                   {item.repeat && (
                     <Text style={styles.repeatText}>
                       {t("adkar.repeat")} {item.repeat} {t("adkar.times")}
@@ -462,6 +467,20 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     color: colors.accent,
     fontWeight: "600",
     marginTop: 4,
+  },
+  noteBox: {
+    width: "100%",
+    backgroundColor: colors.background,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.accent,
+    borderRadius: 8,
+    padding: getResponsivePadding(12),
+  },
+  noteText: {
+    fontSize: getTextSize(14, textSize),
+    color: colors.textSecondary,
+    textAlign: "left",
+    lineHeight: getLineHeight(getTextSize(14, textSize)),
   },
   completeButton: {
     flexDirection: "row",

@@ -379,4 +379,181 @@ export const duas = [
       "Ô Allah, donne-nous une pluie bénéfique, rafraîchissante, agréable, abondante, utile, non nuisible, immédiate et non retardée.",
     source: "Abû Dâwûd",
   },
+
+  {
+    id: "d36",
+    category: "waking",
+    title: "Invocation au réveil",
+    arabic:
+      "الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ",
+    translation:
+      "Louange à Allah qui nous a rendu la vie après nous avoir fait mourir, et c'est vers Lui qu'est la résurrection.",
+    source: "Al-Bukhârî",
+  },
+
+  {
+    id: "d37",
+    category: "home_enter",
+    title: "Invocation en entrant à la maison",
+    arabic:
+      "بِسْمِ اللَّهِ وَلَجْنَا، وَبِسْمِ اللَّهِ خَرَجْنَا، وَعَلَى رَبِّنَا تَوَكَّلْنَا",
+    translation:
+      "Au nom d'Allah nous entrons, au nom d'Allah nous sortons, et c'est en notre Seigneur que nous plaçons notre confiance.",
+    source: "Abû Dâwûd",
+  },
+
+  {
+    id: "d38",
+    category: "home_exit",
+    title: "Invocation en sortant de la maison",
+    arabic:
+      "بِسْمِ اللَّهِ، تَوَكَّلْتُ عَلَى اللَّهِ، وَلَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
+    translation:
+      "Au nom d'Allah, je place ma confiance en Allah, il n'y a de force ni de puissance qu'en Allah.",
+    source: "Abû Dâwûd, At-Tirmidhî",
+  },
+
+  {
+    id: "d39",
+    category: "toilet_enter",
+    title: "Invocation en entrant aux toilettes",
+    arabic:
+      "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْخُبُثِ وَالْخَبَائِثِ",
+    translation:
+      "Ô Allah, je cherche refuge auprès de Toi contre les démons mâles et femelles.",
+    source: "Al-Bukhârî, Muslim",
+  },
+
+  {
+    id: "d40",
+    category: "toilet_exit",
+    title: "Invocation en sortant des toilettes",
+    arabic: "غُفْرَانَكَ",
+    translation: "Je Te demande pardon.",
+    source: "Abû Dâwûd, At-Tirmidhî",
+  },
+
+  {
+    id: "d41",
+    category: "new_clothes",
+    title: "Invocation en portant un nouveau vêtement",
+    arabic:
+      "اللَّهُمَّ لَكَ الْحَمْدُ أَنْتَ كَسَوْتَنِيهِ، أَسْأَلُكَ مِنْ خَيْرِهِ وَخَيْرِ مَا صُنِعَ لَهُ، وَأَعُوذُ بِكَ مِنْ شَرِّهِ وَشَرِّ مَا صُنِعَ لَهُ",
+    translation:
+      "Ô Allah, à Toi la louange, c'est Toi qui me l'as donné à porter. Je Te demande son bien et le bien pour lequel il a été fait, et je cherche refuge auprès de Toi contre son mal et le mal pour lequel il a été fait.",
+    source: "Abû Dâwûd, At-Tirmidhî",
+  },
+
+  {
+    id: "d42",
+    category: "seeing_afflicted",
+    title: "Invocation en voyant une personne éprouvée",
+    arabic:
+      "الْحَمْدُ لِلَّهِ الَّذِي عَافَانِي مِمَّا ابْتَلَاكَ بِهِ، وَفَضَّلَنِي عَلَى كَثِيرٍ مِمَّنْ خَلَقَ تَفْضِيلًا",
+    translation:
+      "Louange à Allah qui m'a préservé de ce dont Il t'a éprouvé, et qui m'a nettement favorisé sur beaucoup de Ses créatures. (à réciter discrètement, sans que la personne n'entende)",
+    source: "At-Tirmidhî",
+  },
+
+  {
+    id: "d43",
+    category: "anger",
+    title: "Invocation contre la colère",
+    arabic: "أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ",
+    translation:
+      "Je cherche refuge auprès d'Allah contre le diable maudit.",
+    source: "Al-Bukhârî, Muslim",
+  },
+
+  {
+    id: "d44",
+    category: "debt",
+    title: "Invocation pour rembourser une dette",
+    arabic:
+      "اللَّهُمَّ اكْفِنِي بِحَلَالِكَ عَنْ حَرَامِكَ، وَأَغْنِنِي بِفَضْلِكَ عَمَّنْ سِوَاكَ",
+    translation:
+      "Ô Allah, suffis-moi par ce que Tu as rendu licite, en me passant de l'illicite, et rends-moi riche par Ta grâce, en me passant de tout autre que Toi.",
+    source: "At-Tirmidhî",
+  },
+
+  {
+    id: "d45",
+    category: "knowledge",
+    title: "Invocation pour l'augmentation de la science",
+    arabic: "رَبِّ زِدْنِي عِلْمًا",
+    translation: "Seigneur, augmente mes connaissances.",
+    source: "Tâ-Hâ, 114",
+  },
+
+  {
+    id: "d46",
+    category: "thunder",
+    title: "Invocation en entendant le tonnerre",
+    arabic:
+      "سُبْحَانَ الَّذِي يُسَبِّحُ الرَّعْدُ بِحَمْدِهِ وَالْمَلَائِكَةُ مِنْ خِيفَتِهِ",
+    translation:
+      "Gloire à Celui que le tonnerre glorifie par Sa louange, ainsi que les anges par crainte de Lui.",
+    source: "Al-Muwatta, Mâlik",
+  },
+
+  {
+    id: "d47",
+    category: "wudu",
+    title: "Invocation après les ablutions",
+    arabic:
+      "أَشْهَدُ أَنْ لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، وَأَشْهَدُ أَنَّ مُحَمَّدًا عَبْدُهُ وَرَسُولُهُ",
+    translation:
+      "J'atteste qu'il n'y a de divinité qu'Allah, unique, sans associé, et j'atteste que Muhammad est Son serviteur et Son messager.",
+    source: "Muslim",
+  },
+
+  {
+    id: "d48",
+    category: "market",
+    title: "Invocation en entrant au marché",
+    arabic:
+      "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، يُحْيِي وَيُمِيتُ وَهُوَ حَيٌّ لَا يَمُوتُ، بِيَدِهِ الْخَيْرُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
+    translation:
+      "Il n'y a de divinité qu'Allah, unique, sans associé. À Lui la royauté et à Lui la louange. Il donne la vie et Il donne la mort, et Il est Vivant, ne mourant jamais. Le bien est dans Sa main, et Il est capable de toute chose.",
+    source: "At-Tirmidhî",
+  },
+
+  {
+    id: "d49",
+    category: "sayyid_istighfar",
+    title: "Sayyid al-Istighfar (le maître de la demande de pardon)",
+    arabic:
+      "اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ",
+    translation:
+      "Ô Allah, Tu es mon Seigneur, il n'y a de divinité que Toi. Tu m'as créé et je suis Ton serviteur. Je m'en tiens, autant que je le peux, à mon engagement et à Ta promesse. Je cherche refuge auprès de Toi contre le mal que j'ai commis. Je reconnais envers Toi le bienfait que Tu m'as accordé, et je reconnais mon péché : pardonne-moi, car nul ne pardonne les péchés si ce n'est Toi.",
+    source: "Al-Bukhârî",
+  },
+
+  {
+    id: "d50",
+    category: "distress",
+    title: "Invocation en cas de grande détresse (invocation de Yûnus)",
+    arabic: "لَا إِلَهَ إِلَّا أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ",
+    translation:
+      "Il n'y a de divinité que Toi, gloire à Toi, j'ai été parmi les injustes.",
+    source: "Al-Anbiyâ', 87",
+  },
+
+  {
+    id: "d51",
+    category: "trust",
+    title: "Invocation de la confiance en Allah",
+    arabic: "حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ",
+    translation: "Allah nous suffit, et quel excellent garant Il est.",
+    source: "Âl 'Imrân, 173",
+  },
+
+  {
+    id: "d52",
+    category: "gratitude",
+    title: "Invocation pour remercier un bienfaiteur",
+    arabic: "جَزَاكَ اللَّهُ خَيْرًا",
+    translation: "Qu'Allah te récompense en bien.",
+    source: "At-Tirmidhî",
+  },
 ];

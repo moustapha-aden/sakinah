@@ -2,7 +2,6 @@ import { View, Text, StyleSheet, Animated, Pressable, Vibration, ScrollView } fr
 import { useMemo, useRef, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import AppButton from "../components/AppButton";
 import { useTasbih, TARGET_OPTIONS } from "../hooks/useTasbih";
 import { useTheme } from "../contexts/ThemeContext";
 import { useTranslation } from "../contexts/TranslationContext";
@@ -11,13 +10,14 @@ import { getTextSize, getLineHeight } from "../utils/textSize";
 import { analytics } from "../lib/firebase";
 import { getResponsiveSize, getResponsivePadding, getResponsiveMargin, isSmallScreen } from "../utils/responsive";
 
-export default function tasbihScreen() {
+export default function TasbihScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
   const { settings } = useSettings();
   const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
   const { dhikrList, counts, selected, setSelected, count, target, setTarget, increment, reset } = useTasbih();
   const dhikrLabel = t(`tasbih.${dhikrList.find((d) => d.id === selected)?.translationKey || "subhanAllah"}`);
+  const virtueText = t(`tasbih.virtue.${selected}`);
 
   useEffect(() => {
     if (analytics && analytics.logEvent) {
@@ -25,137 +25,40 @@ export default function tasbihScreen() {
     }
   }, []);
 
-  // Animations
   const countScale = useRef(new Animated.Value(1)).current;
-  const countOpacity = useRef(new Animated.Value(1)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
-  const rippleScale = useRef(new Animated.Value(0)).current;
-  const rippleOpacity = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
-  const confettiAnims = useRef(
-    Array.from({ length: 8 }, () => ({
-      translateY: new Animated.Value(0),
-      translateX: new Animated.Value(0),
-      opacity: new Animated.Value(0),
-      rotate: new Animated.Value(0),
-    }))
-  ).current;
 
-  // Animation du compteur à chaque changement
   useEffect(() => {
-    // Animation de pulse pour le compteur
     Animated.sequence([
-      Animated.parallel([
-        Animated.spring(countScale, {
-          toValue: 1.3,
-          tension: 100,
-          friction: 3,
-          useNativeDriver: true,
-        }),
-        Animated.timing(countOpacity, {
-          toValue: 0.8,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.parallel([
-        Animated.spring(countScale, {
-          toValue: 1,
-          tension: 50,
-          friction: 7,
-          useNativeDriver: true,
-        }),
-        Animated.timing(countOpacity, {
-          toValue: 1,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-      ]),
-    ]).start();
-
-    // Animation de l'effet ripple
-    rippleScale.setValue(0);
-    rippleOpacity.setValue(1);
-    Animated.parallel([
-      Animated.timing(rippleScale, {
+      Animated.spring(countScale, {
+        toValue: 1.12,
+        tension: 150,
+        friction: 5,
+        useNativeDriver: true,
+      }),
+      Animated.spring(countScale, {
         toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(rippleOpacity, {
-        toValue: 0,
-        duration: 800,
+        tension: 150,
+        friction: 8,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // Animation de la barre de progression
     Animated.timing(progressAnim, {
       toValue: (count % target) / target,
-      duration: 300,
+      duration: 250,
       useNativeDriver: false,
     }).start();
 
-    // Confetti animation quand l'objectif est atteint
     if (count > 0 && count % target === 0) {
-      triggerConfetti();
-      Vibration.vibrate([0, 100, 50, 100]);
+      Vibration.vibrate([0, 80, 60, 80]);
     }
   }, [count, target, selected]);
 
-  // Animation de pulse continue
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.05,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
-
-  const triggerConfetti = () => {
-    confettiAnims.forEach((anim, index) => {
-      anim.translateY.setValue(0);
-      anim.translateX.setValue(0);
-      anim.opacity.setValue(1);
-      anim.rotate.setValue(0);
-
-      const angle = (index * 45) * Math.PI / 180;
-      const distance = 150;
-
-      Animated.parallel([
-        Animated.timing(anim.translateY, {
-          toValue: Math.sin(angle) * distance,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(anim.translateX, {
-          toValue: Math.cos(angle) * distance,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(anim.opacity, {
-          toValue: 0,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(anim.rotate, {
-          toValue: 360,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    });
-  };
+  const progressWidth = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0%", "100%"],
+  });
 
   const handleIncrement = () => {
     Vibration.vibrate(10);
@@ -164,27 +67,8 @@ export default function tasbihScreen() {
 
   const handleReset = () => {
     Vibration.vibrate([0, 50, 50, 50]);
-    
-    // Animation de rotation pour le reset
-    Animated.timing(rotateAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start(() => {
-      rotateAnim.setValue(0);
-      reset();
-    });
+    reset();
   };
-
-  const rotateInterpolate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  const progressWidth = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
 
   const milestone = Math.floor(count / target) * target;
   const nextMilestone = milestone + target;
@@ -192,30 +76,6 @@ export default function tasbihScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      {/* Confetti particles */}
-      <View style={styles.confettiContainer}>
-        {confettiAnims.map((anim, index) => (
-          <Animated.View
-            key={index}
-            style={[
-              styles.confetti,
-              {
-                backgroundColor: ['#FFD700', '#FF6B6B', '#4ECDC4', '#95E1D3'][index % 4],
-                transform: [
-                  { translateX: anim.translateX },
-                  { translateY: anim.translateY },
-                  { rotate: anim.rotate.interpolate({
-                    inputRange: [0, 360],
-                    outputRange: ['0deg', '360deg'],
-                  })},
-                ],
-                opacity: anim.opacity,
-              },
-            ]}
-          />
-        ))}
-      </View>
-
       {/* Titre avec icône */}
       <View style={styles.header}>
         <Ionicons name="finger-print" size={getTextSize(32, settings.textSize)} color={colors.accent} />
@@ -249,36 +109,8 @@ export default function tasbihScreen() {
       </ScrollView>
 
       {/* Cercle de progression */}
-      <Animated.View
-        style={[
-          styles.progressCircle,
-          {
-            transform: [{ scale: pulseAnim }],
-          },
-        ]}
-      >
-        {/* Effet ripple */}
-        <Animated.View
-          style={[
-            styles.ripple,
-            {
-              transform: [{ scale: rippleScale }],
-              opacity: rippleOpacity,
-              borderColor: colors.accent,
-            },
-          ]}
-        />
-
-        {/* Compteur principal */}
-        <Animated.View
-          style={{
-            transform: [
-              { scale: countScale },
-              { rotate: rotateInterpolate },
-            ],
-            opacity: countOpacity,
-          }}
-        >
+      <View style={styles.progressCircle}>
+        <Animated.View style={{ transform: [{ scale: countScale }] }}>
           <LinearGradient
             colors={[colors.accent + "20", colors.accent + "10"]}
             style={styles.countCircle}
@@ -287,7 +119,7 @@ export default function tasbihScreen() {
             <Text style={styles.countLabel}>{t("tasbih.total")}</Text>
           </LinearGradient>
         </Animated.View>
-      </Animated.View>
+      </View>
 
       {/* Sélecteur d'objectif */}
       <View style={styles.targetSelector}>
@@ -315,15 +147,12 @@ export default function tasbihScreen() {
       {/* Barre de progression vers le prochain jalon */}
       <View style={styles.milestoneContainer}>
         <View style={styles.milestoneHeader}>
-          <View style={styles.milestoneInfo}>
-            <Ionicons name="trophy" size={getTextSize(20, settings.textSize)} color={colors.accent} />
-            <Text style={styles.milestoneText}>
-              {t("tasbih.progress")
-                .replace("{progress}", progress.toString())
-                .replace("{nextMilestone}", nextMilestone.toString())
-                .replace("{target}", target.toString())}
-            </Text>
-          </View>
+          <Text style={styles.milestoneText}>
+            {t("tasbih.progress")
+              .replace("{progress}", progress.toString())
+              .replace("{nextMilestone}", nextMilestone.toString())
+              .replace("{target}", target.toString())}
+          </Text>
           <Text style={styles.milestoneCount}>
             {t("tasbih.seriesCount")
               .replace("{count}", Math.floor(count / target).toString())
@@ -344,21 +173,6 @@ export default function tasbihScreen() {
         </View>
       </View>
 
-      {/* Statistiques rapides */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statBox}>
-          <Ionicons name="today" size={getTextSize(24, settings.textSize)} color="#4ECDC4" />
-          <Text style={styles.statNumber}>{count}</Text>
-          <Text style={styles.statLabel}>{t("tasbih.today")}</Text>
-        </View>
-
-        <View style={styles.statBox}>
-          <Ionicons name="star" size={getTextSize(24, settings.textSize)} color="#FFD700" />
-          <Text style={styles.statNumber}>{Math.floor(count / target)}</Text>
-          <Text style={styles.statLabel}>{t("tasbih.series")}</Text>
-        </View>
-      </View>
-
       {/* Boutons d'action */}
       <View style={styles.buttonsContainer}>
         <Pressable
@@ -374,7 +188,7 @@ export default function tasbihScreen() {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <Ionicons name="add" size={getTextSize(48, settings.textSize)} color="#FFFFFF" />
+            <Ionicons name="add" size={getTextSize(32, settings.textSize)} color="#FFFFFF" />
             <Text style={styles.incrementButtonText}>{dhikrLabel}</Text>
           </LinearGradient>
         </Pressable>
@@ -386,18 +200,18 @@ export default function tasbihScreen() {
             pressed && styles.buttonPressed,
           ]}
         >
-          <Ionicons name="refresh" size={getTextSize(24, settings.textSize)} color={colors.textSecondary} />
+          <Ionicons name="refresh" size={getTextSize(20, settings.textSize)} color={colors.textSecondary} />
           <Text style={styles.resetButtonText}>{t("tasbih.reset")}</Text>
         </Pressable>
       </View>
 
-      {/* Rappel inspirant */}
-      <View style={styles.reminderCard}>
-        <Ionicons name="bulb-outline" size={getTextSize(20, settings.textSize)} color={colors.accent} />
-        <Text style={styles.reminderText}>
-          "{t("tasbih.reminder")}"
-        </Text>
-      </View>
+      {/* Vertu du dhikr sélectionné */}
+      {!!virtueText && virtueText !== `tasbih.virtue.${selected}` && (
+        <View style={styles.reminderCard}>
+          <Ionicons name="bulb-outline" size={getTextSize(20, settings.textSize)} color={colors.accent} />
+          <Text style={styles.reminderText}>"{virtueText}"</Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -525,35 +339,11 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     color: "#FFFFFF",
   },
 
-  // Confetti
-  confettiContainer: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "center",
-    pointerEvents: "none",
-  },
-
-  confetti: {
-    position: "absolute",
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-
   // Cercle de progression
   progressCircle: {
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 30,
-    position: "relative",
-  },
-
-  ripple: {
-    position: "absolute",
-    width: getResponsiveSize(280),
-    height: getResponsiveSize(280),
-    borderRadius: getResponsiveSize(140),
-    borderWidth: 3,
   },
 
   countCircle: {
@@ -597,12 +387,6 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     marginBottom: 8,
   },
 
-  milestoneInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-
   milestoneText: {
     fontSize: getTextSize(14, textSize),
     color: colors.textPrimary,
@@ -625,40 +409,6 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   progressBar: {
     height: "100%",
     borderRadius: 4,
-  },
-
-  // Statistiques
-  statsContainer: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 24,
-    width: "100%",
-  },
-
-  statBox: {
-    flex: 1,
-    backgroundColor: colors.card,
-    padding: 16,
-    borderRadius: 16,
-    alignItems: "center",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-
-  statNumber: {
-    fontSize: getTextSize(28, textSize),
-    fontWeight: "700",
-    color: colors.textPrimary,
-    marginTop: 8,
-  },
-
-  statLabel: {
-    fontSize: getTextSize(12, textSize),
-    color: colors.textSecondary,
-    marginTop: 4,
   },
 
   // Boutons
@@ -727,6 +477,7 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     borderRadius: 12,
     borderLeftWidth: 4,
     borderLeftColor: colors.accent,
+    width: "100%",
   },
 
   reminderText: {

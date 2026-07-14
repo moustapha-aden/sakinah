@@ -26,6 +26,13 @@ import { translations } from "../utils/translations";
 import { analytics } from "../lib/firebase";
 import { getResponsivePadding, getResponsiveMargin, getResponsiveSize, isSmallScreen } from "../utils/responsive";
 
+type Quote = {
+  id: number;
+  text: string;
+  translation: string;
+  source: string;
+  image: any;
+};
 
 export default function HomeScreen() {
   const { colors } = useTheme();
@@ -34,19 +41,9 @@ export default function HomeScreen() {
   const { stats, loading: statsLoading, refreshStats, getWeeklyHistory } = useStats();
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
-  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [weeklyHistory, setWeeklyHistory] = useState<{ date: string; count: number }[]>([]);
-
-  // Recharger les stats quand l'écran est focus
-  useFocusEffect(
-    useCallback(() => {
-      refreshStats();
-      getWeeklyHistory().then(setWeeklyHistory);
-      if (analytics && analytics.logEvent) {
-        analytics.logEvent("open_home");
-      }
-    }, [refreshStats, getWeeklyHistory])
-  );
+  const [heroQuote, setHeroQuote] = useState<Quote | null>(null);
+  const [dailyHadiths, setDailyHadiths] = useState<Quote[]>([]);
 
   // Animations en cascade des barres d'historique hebdomadaire
   const historyAnims = useRef(Array.from({ length: 7 }, () => new Animated.Value(0))).current;
@@ -70,20 +67,20 @@ export default function HomeScreen() {
   const quoteOpacity = useRef(new Animated.Value(0)).current;
   const menuScale = useRef(new Animated.Value(0.8)).current;
   const menuOpacity = useRef(new Animated.Value(0)).current;
-  
+
   const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
 
   // Obtenir les citations traduites selon la langue
-  const getQuotes = useCallback(() => {
+  const getQuotes = useCallback((): Quote[] => {
     const currentLang = settings.language || "fr";
     const langTranslations = translations[currentLang as keyof typeof translations] || translations.fr;
-    
+
     return hadiths
       .map((hadith) => {
         try {
           // Accéder directement à l'objet de traduction
           const quoteData = (langTranslations.home?.quotes as any)?.[hadith.translationKey];
-          
+
           if (quoteData && typeof quoteData === 'object' && 'text' in quoteData && 'translation' in quoteData) {
             return {
               id: hadith.id,
@@ -99,20 +96,27 @@ export default function HomeScreen() {
           return null;
         }
       })
-      .filter((quote): quote is NonNullable<typeof quote> => quote !== null);
+      .filter((quote): quote is Quote => quote !== null);
   }, [settings.language]);
 
   const quotes = useMemo(() => getQuotes(), [getQuotes]);
-  
-  // Sélectionner une citation aléatoire au chargement et quand la langue change
-  useEffect(() => {
-    if (quotes.length > 0) {
-      const randomIndex = Math.floor(Math.random() * quotes.length);
-      setCurrentQuoteIndex(randomIndex);
-    }
-  }, [language, quotes.length]);
 
-  const currentQuote = quotes[currentQuoteIndex] || (quotes.length > 0 ? quotes[0] : null);
+  // Recharger les stats et tirer 1 hadith vedette + 3 hadiths à chaque retour sur le home
+  useFocusEffect(
+    useCallback(() => {
+      refreshStats();
+      getWeeklyHistory().then(setWeeklyHistory);
+      if (analytics && analytics.logEvent) {
+        analytics.logEvent("open_home");
+      }
+
+      if (quotes.length > 0) {
+        const shuffled = [...quotes].sort(() => Math.random() - 0.5);
+        setHeroQuote(shuffled[0]);
+        setDailyHadiths(shuffled.slice(1, 4));
+      }
+    }, [refreshStats, getWeeklyHistory, quotes])
+  );
 
   // Animation d'entrée au chargement
   useEffect(() => {
@@ -277,10 +281,10 @@ export default function HomeScreen() {
         </Animated.Text>
 
         {/* CARTE CITATION DU JOUR */}
-        {currentQuote && (
+        {heroQuote && (
           <Animated.View style={[styles.quoteCard, { opacity: quoteOpacity }]}>
             <ImageBackground
-              source={currentQuote.image}
+              source={heroQuote.image}
               style={styles.quoteImageBackground}
               imageStyle={styles.quoteImage}
             >
@@ -291,13 +295,13 @@ export default function HomeScreen() {
                 <View style={styles.quoteIconContainer}>
                   <Ionicons name="book-outline" size={28} color="#FFD700" />
                 </View>
-                
-                <Text style={styles.quoteArabic}>{currentQuote.text}</Text>
-                <Text style={styles.quoteTranslation}>{currentQuote.translation}</Text>
-                
+
+                <Text style={styles.quoteArabic}>{heroQuote.text}</Text>
+                <Text style={styles.quoteTranslation}>{heroQuote.translation}</Text>
+
                 <View style={styles.quoteSourceContainer}>
                   <Ionicons name="bookmark" size={16} color="#FFD700" />
-                  <Text style={styles.quoteSource}>{currentQuote.source}</Text>
+                  <Text style={styles.quoteSource}>{heroQuote.source}</Text>
                 </View>
               </LinearGradient>
             </ImageBackground>
@@ -425,22 +429,8 @@ export default function HomeScreen() {
             <Text style={styles.sectionTitle}>{t("home.hadithsOfDay")}</Text>
           </View>
 
-          {quotes.length > 0 ? (() => {
-            // Sélectionner 3 hadiths aléatoires différents de celui affiché en haut
-            const availableQuotes = currentQuote 
-              ? quotes.filter(q => q.id !== currentQuote.id)
-              : quotes;
-            
-            // S'assurer qu'on a au moins 3 hadiths disponibles
-            const hadithsToShow = availableQuotes.length >= 3 
-              ? availableQuotes.length 
-              : quotes.length;
-            
-            // Mélanger et prendre les premiers
-            const shuffled = [...availableQuotes].sort(() => Math.random() - 0.5);
-            const randomHadiths = shuffled.slice(0, Math.min(3, hadithsToShow));
-            
-            return randomHadiths.length > 0 ? randomHadiths.map((quote) => (
+          {dailyHadiths.length > 0 ? (
+            dailyHadiths.map((quote) => (
               <View key={quote.id} style={styles.hadithCard}>
                 <View style={styles.hadithIcon}>
                   <Ionicons name="book" size={20} color={colors.accent} />
@@ -452,14 +442,10 @@ export default function HomeScreen() {
                   <Text style={styles.hadithSource}>{quote.source}</Text>
                 </View>
               </View>
-            )) : (
-              <View style={styles.hadithCard}>
-                <Text style={styles.hadithText}>Chargement...</Text>
-              </View>
-            );
-          })() : (
+            ))
+          ) : (
             <View style={styles.hadithCard}>
-              <Text style={styles.hadithText}>Aucun hadith disponible</Text>
+              <Text style={styles.hadithText}>Chargement...</Text>
             </View>
           )}
         </Animated.View>

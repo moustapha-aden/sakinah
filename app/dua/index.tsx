@@ -67,6 +67,23 @@ const getCategoryIcon = (category: string) => {
     evening: { name: "nights-stay", library: "MaterialIcons" },
     travel: { name: "flight", library: "MaterialIcons" },
     rain: { name: "grain", library: "MaterialIcons" },
+    waking: { name: "alarm", library: "MaterialIcons" },
+    home_enter: { name: "home", library: "MaterialIcons" },
+    home_exit: { name: "exit-to-app", library: "MaterialIcons" },
+    toilet_enter: { name: "wc", library: "MaterialIcons" },
+    toilet_exit: { name: "wc", library: "MaterialIcons" },
+    new_clothes: { name: "checkroom", library: "MaterialIcons" },
+    seeing_afflicted: { name: "visibility", library: "MaterialIcons" },
+    anger: { name: "whatshot", library: "MaterialIcons" },
+    debt: { name: "account-balance-wallet", library: "MaterialIcons" },
+    knowledge: { name: "psychology", library: "MaterialIcons" },
+    thunder: { name: "flash-on", library: "MaterialIcons" },
+    wudu: { name: "opacity", library: "MaterialIcons" },
+    market: { name: "store", library: "MaterialIcons" },
+    sayyid_istighfar: { name: "auto-awesome", library: "MaterialIcons" },
+    distress: { name: "report-problem", library: "MaterialIcons" },
+    trust: { name: "support", library: "MaterialIcons" },
+    gratitude: { name: "thumb-up", library: "MaterialIcons" },
   };
 
   const icon = iconMap[category] || { name: "menu-book", library: "MaterialIcons" };
@@ -132,7 +149,13 @@ function DuaScreenContent({ styles, colors }: { styles: any; colors: any }) {
     if (analytics && analytics.logEvent) {
       analytics.logEvent("share_dua", { dua_id: dua.id, category: dua.category });
     }
-    const parts = [dua.title, dua.arabic, dua.translation, dua.source ? `— ${dua.source}` : ""].filter(Boolean);
+    const parts = [
+      dua.title,
+      dua.arabic,
+      dua.translation,
+      dua.source ? `— ${dua.source}` : "",
+      t("dua.shareSignature"),
+    ].filter(Boolean);
     Share.share({ message: parts.join("\n\n") });
   };
 

@@ -84,7 +84,7 @@ export default function HelpScreen() {
             <TouchableOpacity
               style={styles.contactButton}
               onPress={() => {
-                Linking.openURL("mailto:support@sakinah.app");
+                Linking.openURL("mailto:moustaphaaden232020@gmail.com");
               }}
             >
               <Ionicons name="mail" size={20} color={colors.textPrimary} />
