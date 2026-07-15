@@ -15,11 +15,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLayoutEffect } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 
-import AppButton from "../components/AppButton";
+import QuickActionTile from "../components/QuickActionTile";
 import { useTheme } from "../contexts/ThemeContext";
 import { useTranslation } from "../contexts/TranslationContext";
 import { useSettings } from "../hooks/useSettings";
 import { useStats } from "../contexts/StatsContext";
+import { usePrayerTimes, PRAYER_LABEL_KEYS } from "../hooks/usePrayerTimes";
+import { useNotifications } from "../hooks/useNotifications";
 import { getTextSize } from "../utils/textSize";
 import { hadiths, quoteImages } from "../data/hadith";
 import { translations } from "../utils/translations";
@@ -39,6 +41,8 @@ export default function HomeScreen() {
   const { t, language } = useTranslation();
   const { settings } = useSettings();
   const { stats, loading: statsLoading, refreshStats, getWeeklyHistory } = useStats();
+  const { timings: prayerTimings, nextPrayer, countdownLabel, progressToNext } = usePrayerTimes();
+  const { schedulePrayerReminders } = useNotifications();
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
   const [weeklyHistory, setWeeklyHistory] = useState<{ date: string; count: number }[]>([]);
@@ -64,11 +68,47 @@ export default function HomeScreen() {
   const button1Translate = useRef(new Animated.Value(50)).current;
   const button2Translate = useRef(new Animated.Value(50)).current;
   const button3Translate = useRef(new Animated.Value(50)).current;
+  const button4Translate = useRef(new Animated.Value(50)).current;
+  const button5Translate = useRef(new Animated.Value(50)).current;
   const quoteOpacity = useRef(new Animated.Value(0)).current;
   const menuScale = useRef(new Animated.Value(0.8)).current;
   const menuOpacity = useRef(new Animated.Value(0)).current;
+  const prayerWidgetAnim = useRef(new Animated.Value(0)).current;
+  const prayerWidgetScale = useRef(new Animated.Value(1)).current;
+  const prayerProgressAnim = useRef(new Animated.Value(0)).current;
+
+  // Entrée du widget prière dès que les horaires sont disponibles
+  useEffect(() => {
+    if (nextPrayer) {
+      Animated.spring(prayerWidgetAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [nextPrayer]);
+
+  // Progression animée vers la prochaine prière (barre, largeur => pas de native driver)
+  useEffect(() => {
+    Animated.timing(prayerProgressAnim, {
+      toValue: progressToNext,
+      duration: 600,
+      useNativeDriver: false,
+    }).start();
+  }, [progressToNext]);
 
   const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
+
+  // Date du jour localisée pour l'en-tête
+  const dateLabel = useMemo(() => {
+    const locale = language === "ar" ? "ar" : language === "en" ? "en-US" : "fr-FR";
+    return new Date().toLocaleDateString(locale, {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
+  }, [language]);
 
   // Obtenir les citations traduites selon la langue
   const getQuotes = useCallback((): Quote[] => {
@@ -118,6 +158,14 @@ export default function HomeScreen() {
     }, [refreshStats, getWeeklyHistory, quotes])
   );
 
+  // Reprogrammer les rappels de prière dès que de nouveaux horaires arrivent
+  // (nouvelle position, nouvelle méthode de calcul, ou nouveau jour).
+  useEffect(() => {
+    if (settings.notifications && prayerTimings) {
+      schedulePrayerReminders(prayerTimings, settings.language);
+    }
+  }, [settings.notifications, settings.language, prayerTimings, schedulePrayerReminders]);
+
   // Animation d'entrée au chargement
   useEffect(() => {
     Animated.parallel([
@@ -155,6 +203,18 @@ export default function HomeScreen() {
         useNativeDriver: true,
       }),
       Animated.spring(button3Translate, {
+        toValue: 0,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.spring(button4Translate, {
+        toValue: 0,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.spring(button5Translate, {
         toValue: 0,
         tension: 50,
         friction: 7,
@@ -268,17 +328,110 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </Modal>
 
-        {/* TITRE */}
-        <Animated.Text
+        {/* EN-TÊTE SALUTATION */}
+        <Animated.View
           style={[
-            styles.title,
+            styles.header,
             {
+              opacity: fadeAnim,
               transform: [{ scale: titleScale }],
             },
           ]}
         >
-          🕊️ {t("home.title")}
-        </Animated.Text>
+          <Text style={styles.greeting}>{t("home.greeting")}</Text>
+          <Text style={styles.dateLine}>{dateLabel}</Text>
+        </Animated.View>
+
+        {/* PROCHAINE PRIÈRE */}
+        {nextPrayer && prayerTimings && (
+          <Animated.View
+            style={{
+              opacity: prayerWidgetAnim,
+              transform: [
+                {
+                  translateY: prayerWidgetAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-18, 0],
+                  }),
+                },
+                { scale: prayerWidgetScale },
+              ],
+            }}
+          >
+            <Pressable
+              onPress={() => {
+                if (analytics && analytics.logEvent) {
+                  analytics.logEvent("navigate_to_prayer_times");
+                }
+                router.push("/prayerTimes");
+              }}
+              onPressIn={() =>
+                Animated.spring(prayerWidgetScale, {
+                  toValue: 0.97,
+                  useNativeDriver: true,
+                  speed: 40,
+                  bounciness: 6,
+                }).start()
+              }
+              onPressOut={() =>
+                Animated.spring(prayerWidgetScale, {
+                  toValue: 1,
+                  useNativeDriver: true,
+                  speed: 20,
+                  bounciness: 8,
+                }).start()
+              }
+            >
+              <LinearGradient
+                colors={[colors.accent, colors.accent + "D9"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.prayerWidget}
+              >
+                <View style={styles.prayerWidgetTop}>
+                  <View style={styles.prayerWidgetIcon}>
+                    <Ionicons name="moon" size={16} color="#FFFFFF" />
+                  </View>
+                  <Text style={styles.prayerWidgetLabel}>
+                    {t("prayerTimes.nextPrayer")}
+                  </Text>
+                  <View style={styles.prayerWidgetTimeChip}>
+                    <Ionicons name="time-outline" size={13} color="#FFFFFF" />
+                    <Text style={styles.prayerWidgetTimeChipText}>
+                      {prayerTimings[nextPrayer]}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.prayerWidgetMain}>
+                  <Text style={styles.prayerWidgetName}>
+                    {t(`prayerTimes.${PRAYER_LABEL_KEYS[nextPrayer]}`)}
+                  </Text>
+                  <View style={styles.prayerWidgetCountdownBlock}>
+                    <Text style={styles.prayerWidgetCountdown}>{countdownLabel}</Text>
+                    <Text style={styles.prayerWidgetCountdownHint}>
+                      {t("prayerTimes.remaining")}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.prayerWidgetProgressTrack}>
+                  <Animated.View
+                    style={[
+                      styles.prayerWidgetProgressFill,
+                      {
+                        width: prayerProgressAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ["0%", "100%"],
+                        }),
+                      },
+                    ]}
+                  />
+                </View>
+              </LinearGradient>
+            </Pressable>
+          </Animated.View>
+        )}
 
         {/* CARTE CITATION DU JOUR */}
         {heroQuote && (
@@ -377,49 +530,114 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* BOUTONS PRINCIPAUX */}
-        <View style={styles.buttonsContainer}>
-          <Animated.View
-            style={{
-              transform: [{ translateY: button1Translate }],
-              opacity: fadeAnim,
-            }}
-          >
-            <AppButton title={t("home.adkar")} onPress={() => {
-              if (analytics && analytics.logEvent) {
-                analytics.logEvent("navigate_to_adkar");
-              }
-              router.push("/adkar");
-            }} />
-          </Animated.View>
+        {/* ACCÈS RAPIDE */}
+        <View style={styles.quickAccessSection}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="apps" size={20} color={colors.accent} />
+            <Text style={styles.sectionTitle}>{t("home.quickAccess")}</Text>
+          </View>
 
-          <Animated.View
-            style={{
-              transform: [{ translateY: button2Translate }],
-              opacity: fadeAnim,
-            }}
-          >
-            <AppButton title={t("home.dua")} onPress={() => {
-              if (analytics && analytics.logEvent) {
-                analytics.logEvent("navigate_to_dua");
-              }
-              router.push("/dua");
-            }} />
-          </Animated.View>
+          <View style={styles.quickAccessRow}>
+            <Animated.View
+              style={[
+                styles.quickAccessItem,
+                { transform: [{ translateY: button1Translate }], opacity: fadeAnim },
+              ]}
+            >
+              <QuickActionTile
+                label={t("home.adkarShort")}
+                icon="star-crescent"
+                iconFamily="material-community"
+                gradient={["#34C77B", "#1FA36B"]}
+                onPress={() => {
+                  if (analytics && analytics.logEvent) {
+                    analytics.logEvent("navigate_to_adkar");
+                  }
+                  router.push("/adkar");
+                }}
+              />
+            </Animated.View>
 
-          <Animated.View
-            style={{
-              transform: [{ translateY: button3Translate }],
-              opacity: fadeAnim,
-            }}
-          >
-            <AppButton title={t("home.tasbih")} onPress={() => {
-              if (analytics && analytics.logEvent) {
-                analytics.logEvent("navigate_to_tasbih");
-              }
-              router.push("/tasbih");
-            }} />
-          </Animated.View>
+            <Animated.View
+              style={[
+                styles.quickAccessItem,
+                { transform: [{ translateY: button2Translate }], opacity: fadeAnim },
+              ]}
+            >
+              <QuickActionTile
+                label={t("home.duaShort")}
+                icon="hands-pray"
+                iconFamily="material-community"
+                gradient={["#5B9CF5", "#3C7BE0"]}
+                onPress={() => {
+                  if (analytics && analytics.logEvent) {
+                    analytics.logEvent("navigate_to_dua");
+                  }
+                  router.push("/dua");
+                }}
+              />
+            </Animated.View>
+
+            <Animated.View
+              style={[
+                styles.quickAccessItem,
+                { transform: [{ translateY: button3Translate }], opacity: fadeAnim },
+              ]}
+            >
+              <QuickActionTile
+                label={t("home.tasbihShort")}
+                icon="dots-circle"
+                iconFamily="material-community"
+                gradient={["#9B7BF5", "#7B5BE0"]}
+                onPress={() => {
+                  if (analytics && analytics.logEvent) {
+                    analytics.logEvent("navigate_to_tasbih");
+                  }
+                  router.push("/tasbih");
+                }}
+              />
+            </Animated.View>
+
+            <Animated.View
+              style={[
+                styles.quickAccessItem,
+                { transform: [{ translateY: button4Translate }], opacity: fadeAnim },
+              ]}
+            >
+              <QuickActionTile
+                label={t("home.prayerTimesShort")}
+                icon="mosque"
+                iconFamily="material-community"
+                gradient={["#E6B65C", "#D19E3C"]}
+                onPress={() => {
+                  if (analytics && analytics.logEvent) {
+                    analytics.logEvent("navigate_to_prayer_times");
+                  }
+                  router.push("/prayerTimes");
+                }}
+              />
+            </Animated.View>
+
+            <Animated.View
+              style={[
+                styles.quickAccessItem,
+                { transform: [{ translateY: button5Translate }], opacity: fadeAnim },
+              ]}
+            >
+              <QuickActionTile
+                label={t("home.qiblaShort")}
+                icon="compass"
+                iconFamily="material-community"
+                gradient={["#2BB3A3", "#1A9384"]}
+                onPress={() => {
+                  if (analytics && analytics.logEvent) {
+                    analytics.logEvent("navigate_to_qibla");
+                  }
+                  router.push("/qibla");
+                }}
+              />
+            </Animated.View>
+          </View>
         </View>
 
         {/* SECTION HADITHS RAPIDES */}
@@ -478,13 +696,126 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     padding: getResponsivePadding(20),
   },
 
-  title: {
-    fontSize: getTextSize(isSmallScreen ? 24 : 28, textSize),
-    textAlign: "center",
+  header: {
+    marginTop: getResponsiveMargin(8),
+    marginBottom: getResponsiveMargin(18),
+  },
+
+  greeting: {
+    fontSize: getTextSize(isSmallScreen ? 22 : 26, textSize),
     color: colors.textPrimary,
-    marginBottom: getResponsiveMargin(20),
-    marginTop: getResponsiveMargin(10),
-    fontWeight: "600",
+    fontWeight: "800",
+    letterSpacing: 0.3,
+  },
+
+  dateLine: {
+    fontSize: getTextSize(13, textSize),
+    color: colors.textSecondary,
+    marginTop: 4,
+    textTransform: "capitalize",
+    letterSpacing: 0.2,
+  },
+
+  // WIDGET PROCHAINE PRIÈRE
+  prayerWidget: {
+    borderRadius: getResponsiveSize(18),
+    padding: getResponsivePadding(16),
+    marginBottom: getResponsiveMargin(16),
+    elevation: 6,
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+  },
+
+  prayerWidgetTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  prayerWidgetIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.22)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  prayerWidgetLabel: {
+    flex: 1,
+    fontSize: getTextSize(11, textSize),
+    color: "rgba(255,255,255,0.85)",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    fontWeight: "700",
+  },
+
+  prayerWidgetTimeChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(255,255,255,0.22)",
+    borderRadius: 999,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+
+  prayerWidgetTimeChipText: {
+    fontSize: getTextSize(12, textSize),
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
+  },
+
+  prayerWidgetMain: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    marginTop: getResponsiveMargin(12),
+    gap: 12,
+  },
+
+  prayerWidgetName: {
+    flex: 1,
+    fontSize: getTextSize(24, textSize),
+    color: "#FFFFFF",
+    fontWeight: "800",
+  },
+
+  prayerWidgetCountdownBlock: {
+    alignItems: "flex-end",
+  },
+
+  prayerWidgetCountdown: {
+    fontSize: getTextSize(22, textSize),
+    color: "#FFFFFF",
+    fontWeight: "800",
+    fontVariant: ["tabular-nums"],
+    letterSpacing: 0.5,
+  },
+
+  prayerWidgetCountdownHint: {
+    fontSize: getTextSize(10, textSize),
+    color: "rgba(255,255,255,0.8)",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginTop: 1,
+  },
+
+  prayerWidgetProgressTrack: {
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    marginTop: getResponsiveMargin(14),
+    overflow: "hidden",
+  },
+
+  prayerWidgetProgressFill: {
+    height: "100%",
+    borderRadius: 3,
+    backgroundColor: "#FFFFFF",
   },
 
   // CARTE CITATION
@@ -562,6 +893,8 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     backgroundColor: colors.card,
     padding: getResponsivePadding(16),
     borderRadius: getResponsiveSize(16),
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: "center",
     elevation: 3,
     shadowColor: "#000",
@@ -594,6 +927,8 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     justifyContent: "space-between",
     backgroundColor: colors.card,
     borderRadius: getResponsiveSize(16),
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: getResponsivePadding(16),
     elevation: 2,
     shadowColor: "#000",
@@ -633,10 +968,18 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     fontWeight: "700",
   },
 
-  // BOUTONS
-  buttonsContainer: {
-    gap: getResponsiveSize(16),
+  // ACCÈS RAPIDE
+  quickAccessSection: {
     marginBottom: getResponsiveMargin(24),
+  },
+
+  quickAccessRow: {
+    flexDirection: "row",
+    gap: getResponsiveSize(8),
+  },
+
+  quickAccessItem: {
+    flex: 1,
   },
 
   // SECTION HADITHS
@@ -652,15 +995,19 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: getTextSize(18, textSize),
-    fontWeight: "600",
-    color: colors.textPrimary,
+    fontSize: getTextSize(14, textSize),
+    fontWeight: "700",
+    color: colors.textSecondary,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
 
   hadithCard: {
     backgroundColor: colors.card,
     padding: getResponsivePadding(14),
     borderRadius: getResponsiveSize(12),
+    borderWidth: 1,
+    borderColor: colors.border,
     marginBottom: getResponsiveMargin(10),
     flexDirection: "row",
     gap: getResponsiveSize(12),

@@ -4,18 +4,27 @@ import * as Notifications from "expo-notifications";
 import { hadiths } from "../data/hadith";
 import { translations } from "../utils/translations";
 import type { Language } from "../contexts/SettingsContext";
+import { REAL_PRAYERS, PRAYER_LABEL_KEYS, type RealPrayer } from "./usePrayerTimes";
+
+const PRAYER_REMINDER_PREFIX = "sakinah-prayer-";
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
+  handleNotification: async (notification) => {
+    const isPrayerReminder = notification.request.identifier?.startsWith(PRAYER_REMINDER_PREFIX);
+    return {
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: !!isPrayerReminder,
+      shouldSetBadge: false,
+    };
+  },
 });
 
 const MORNING_REMINDER_ID = "sakinah-adkar-morning";
 const EVENING_REMINDER_ID = "sakinah-adkar-evening";
+// Son court joint à la notification (voir assets/audio/notification_chime.wav).
+// Nécessite un dev build / build EAS : les sons personnalisés ne jouent pas dans Expo Go.
+const PRAYER_NOTIFICATION_SOUND = "notification_chime.wav";
 
 async function ensureAndroidChannel() {
   if (Platform.OS === "android") {
@@ -79,6 +88,49 @@ export function useNotifications() {
     await Notifications.cancelAllScheduledNotificationsAsync();
   }, []);
 
+  // Planifie une notification (avec son court) pour chaque prière du jour pas encore passée.
+  // À rappeler dès que de nouveaux horaires sont disponibles (nouvelle position/jour) :
+  // les anciennes notifications de prière sont annulées puis reprogrammées.
+  const schedulePrayerReminders = useCallback(
+    async (timings: Partial<Record<RealPrayer, string>>, language: Language) => {
+      await ensureAndroidChannel();
+
+      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+      await Promise.all(
+        scheduled
+          .filter((n) => n.identifier?.startsWith(PRAYER_REMINDER_PREFIX))
+          .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier))
+      );
+
+      const langTranslations = translations[language] || translations.fr;
+      const today = new Date();
+      const dateStamp = today.toDateString();
+
+      for (const key of REAL_PRAYERS) {
+        const timeStr = timings[key];
+        if (!timeStr) continue;
+        const [h, m] = timeStr.split(":").map(Number);
+        const date = new Date(today);
+        date.setHours(h, m, 0, 0);
+        if (date.getTime() <= Date.now()) continue;
+
+        const label = (langTranslations.prayerTimes as any)?.[PRAYER_LABEL_KEYS[key]] || key;
+        const bodyTemplate = (langTranslations.prayerTimes as any)?.notificationBody || "{prayer}";
+
+        await Notifications.scheduleNotificationAsync({
+          identifier: `${PRAYER_REMINDER_PREFIX}${key}-${dateStamp}`,
+          content: {
+            title: `🕌 ${label}`,
+            body: bodyTemplate.replace("{prayer}", label).replace("{time}", timeStr),
+            sound: PRAYER_NOTIFICATION_SOUND,
+          },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date },
+        });
+      }
+    },
+    []
+  );
+
   const sendTestNotification = useCallback(async (language: Language) => {
     await ensureAndroidChannel();
     const quote = pickRandomQuote(language);
@@ -91,5 +143,5 @@ export function useNotifications() {
     });
   }, []);
 
-  return { requestPermission, scheduleDailyReminders, cancelAll, sendTestNotification };
+  return { requestPermission, scheduleDailyReminders, schedulePrayerReminders, cancelAll, sendTestNotification };
 }

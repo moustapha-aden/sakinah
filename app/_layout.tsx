@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
+import * as SplashScreen from "expo-splash-screen";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 import { SettingsProvider } from "../contexts/SettingsContext";
 import { TranslationProvider, useTranslation } from "../contexts/TranslationContext";
@@ -8,6 +9,11 @@ import { StatsProvider } from "../contexts/StatsContext";
 import { useNavigation } from "expo-router";
 import { useSettings } from "../hooks/useSettings";
 import { useNotifications } from "../hooks/useNotifications";
+import AnimatedSplash from "../components/AnimatedSplash";
+
+// Garder le splash natif visible jusqu'à ce que le splash animé prenne le relais
+SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.setOptions({ fade: true, duration: 300 });
 
 function RootLayoutNav() {
   const { colors, theme } = useTheme();
@@ -15,6 +21,12 @@ function RootLayoutNav() {
   const navigation = useNavigation();
   const { settings, loading: settingsLoading } = useSettings();
   const { scheduleDailyReminders } = useNotifications();
+  const [showSplash, setShowSplash] = useState(true);
+
+  // Le splash animé est monté : on peut masquer le splash natif
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
 
   // Reprogrammer les rappels au démarrage si l'utilisateur les avait activés
   // (ils peuvent être perdus après une réinstallation ou un redémarrage de l'appareil)
@@ -83,11 +95,20 @@ function RootLayoutNav() {
           name="settings/help" 
           options={{ title: t("help.title") }} 
         />
-        <Stack.Screen 
-          name="tasbih" 
-          options={{ title: t("tasbih.title") }} 
+        <Stack.Screen
+          name="tasbih"
+          options={{ title: t("tasbih.title") }}
+        />
+        <Stack.Screen
+          name="prayerTimes"
+          options={{ title: t("prayerTimes.title") }}
+        />
+        <Stack.Screen
+          name="qibla"
+          options={{ title: t("qibla.title") }}
         />
       </Stack>
+      {showSplash && <AnimatedSplash onFinish={() => setShowSplash(false)} />}
     </>
   );
 }
