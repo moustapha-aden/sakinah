@@ -1,6 +1,6 @@
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { Platform } from "react-native";
-import * as Notifications from "expo-notifications";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import { hadiths } from "../data/hadith";
 import { translations } from "../utils/translations";
 import type { Language } from "../contexts/SettingsContext";
@@ -8,25 +8,53 @@ import { REAL_PRAYERS, PRAYER_LABEL_KEYS, type RealPrayer } from "./usePrayerTim
 
 const PRAYER_REMINDER_PREFIX = "sakinah-prayer-";
 
-Notifications.setNotificationHandler({
-  handleNotification: async (notification) => {
-    const isPrayerReminder = notification.request.identifier?.startsWith(PRAYER_REMINDER_PREFIX);
-    return {
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: !!isPrayerReminder,
-      shouldSetBadge: false,
-    };
-  },
-});
-
 const MORNING_REMINDER_ID = "sakinah-adkar-morning";
 const EVENING_REMINDER_ID = "sakinah-adkar-evening";
 // Son court joint à la notification (voir assets/audio/notification_chime.wav).
 // Nécessite un dev build / build EAS : les sons personnalisés ne jouent pas dans Expo Go.
 const PRAYER_NOTIFICATION_SOUND = "notification_chime.wav";
 
-async function ensureAndroidChannel() {
+// Depuis le SDK 53, expo-notifications déclenche un ERROR au simple import dans
+// Expo Go (Android). On charge donc le module à la demande, et on le neutralise
+// dans Expo Go Android pour garder un démarrage propre.
+const isExpoGoAndroid =
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient &&
+  Platform.OS === "android";
+
+type NotificationsModule = typeof import("expo-notifications");
+
+let notificationsModule: NotificationsModule | null = null;
+let expoGoNoticeShown = false;
+
+function getNotifications(): NotificationsModule | null {
+  if (isExpoGoAndroid) {
+    if (!expoGoNoticeShown) {
+      expoGoNoticeShown = true;
+      console.log(
+        "ℹ️ Notifications indisponibles dans Expo Go (Android) — utilisez un development build pour les tester."
+      );
+    }
+    return null;
+  }
+
+  if (!notificationsModule) {
+    notificationsModule = require("expo-notifications") as NotificationsModule;
+    notificationsModule.setNotificationHandler({
+      handleNotification: async (notification) => {
+        const isPrayerReminder = notification.request.identifier?.startsWith(PRAYER_REMINDER_PREFIX);
+        return {
+          shouldShowBanner: true,
+          shouldShowList: true,
+          shouldPlaySound: !!isPrayerReminder,
+          shouldSetBadge: false,
+        };
+      },
+    });
+  }
+  return notificationsModule;
+}
+
+async function ensureAndroidChannel(Notifications: NotificationsModule) {
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
       name: "Sakīnah",
@@ -52,11 +80,9 @@ function pickRandomQuote(language: Language) {
 }
 
 export function useNotifications() {
-  useEffect(() => {
-    ensureAndroidChannel();
-  }, []);
-
   const requestPermission = useCallback(async (): Promise<boolean> => {
+    const Notifications = getNotifications();
+    if (!Notifications) return false;
     const current = await Notifications.getPermissionsAsync();
     if (current.granted) return true;
     const requested = await Notifications.requestPermissionsAsync();
@@ -64,7 +90,9 @@ export function useNotifications() {
   }, []);
 
   const scheduleDailyReminders = useCallback(async (language: Language) => {
-    await ensureAndroidChannel();
+    const Notifications = getNotifications();
+    if (!Notifications) return;
+    await ensureAndroidChannel(Notifications);
     await Notifications.cancelAllScheduledNotificationsAsync();
 
     const langTranslations = translations[language] || translations.fr;
@@ -85,6 +113,8 @@ export function useNotifications() {
   }, []);
 
   const cancelAll = useCallback(async () => {
+    const Notifications = getNotifications();
+    if (!Notifications) return;
     await Notifications.cancelAllScheduledNotificationsAsync();
   }, []);
 
@@ -93,7 +123,9 @@ export function useNotifications() {
   // les anciennes notifications de prière sont annulées puis reprogrammées.
   const schedulePrayerReminders = useCallback(
     async (timings: Partial<Record<RealPrayer, string>>, language: Language) => {
-      await ensureAndroidChannel();
+      const Notifications = getNotifications();
+      if (!Notifications) return;
+      await ensureAndroidChannel(Notifications);
 
       const scheduled = await Notifications.getAllScheduledNotificationsAsync();
       await Promise.all(
@@ -132,7 +164,9 @@ export function useNotifications() {
   );
 
   const sendTestNotification = useCallback(async (language: Language) => {
-    await ensureAndroidChannel();
+    const Notifications = getNotifications();
+    if (!Notifications) return;
+    await ensureAndroidChannel(Notifications);
     const quote = pickRandomQuote(language);
     await Notifications.scheduleNotificationAsync({
       content: {

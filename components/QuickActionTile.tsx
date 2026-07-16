@@ -55,9 +55,9 @@ export default function QuickActionTile({
           style={styles.iconBadge}
         >
           {iconFamily === "material-community" ? (
-            <MaterialCommunityIcons name={icon as any} size={24} color="#FFFFFF" />
+            <MaterialCommunityIcons name={icon as any} size={26} color="#FFFFFF" />
           ) : (
-            <Ionicons name={icon as any} size={24} color="#FFFFFF" />
+            <Ionicons name={icon as any} size={26} color="#FFFFFF" />
           )}
         </LinearGradient>
         <Text style={styles.label} numberOfLines={1} adjustsFontSizeToFit>
@@ -71,7 +71,7 @@ export default function QuickActionTile({
 const createStyles = (colors: any, textSize: any) =>
   StyleSheet.create({
     pressable: {
-      flex: 1,
+      width: "100%",
     },
 
     tile: {
@@ -79,10 +79,10 @@ const createStyles = (colors: any, textSize: any) =>
       borderRadius: getResponsiveSize(16),
       borderWidth: 1,
       borderColor: colors.border,
-      paddingVertical: getResponsiveSize(12),
-      paddingHorizontal: 2,
+      paddingVertical: getResponsiveSize(14),
+      paddingHorizontal: 4,
       alignItems: "center",
-      gap: getResponsiveSize(7),
+      gap: getResponsiveSize(8),
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.08,
@@ -91,15 +91,15 @@ const createStyles = (colors: any, textSize: any) =>
     },
 
     iconBadge: {
-      width: getResponsiveSize(44),
-      height: getResponsiveSize(44),
-      borderRadius: getResponsiveSize(14),
+      width: getResponsiveSize(48),
+      height: getResponsiveSize(48),
+      borderRadius: getResponsiveSize(15),
       justifyContent: "center",
       alignItems: "center",
     },
 
     label: {
-      fontSize: getTextSize(11, textSize),
+      fontSize: getTextSize(12, textSize),
       fontWeight: "600",
       color: colors.textPrimary,
       textAlign: "center",

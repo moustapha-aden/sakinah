@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useLayoutEffect, useState } from "react";
 import * as SplashScreen from "expo-splash-screen";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 import { SettingsProvider } from "../contexts/SettingsContext";
 import { TranslationProvider, useTranslation } from "../contexts/TranslationContext";
@@ -13,7 +14,10 @@ import AnimatedSplash from "../components/AnimatedSplash";
 
 // Garder le splash natif visible jusqu'à ce que le splash animé prenne le relais
 SplashScreen.preventAutoHideAsync().catch(() => {});
-SplashScreen.setOptions({ fade: true, duration: 300 });
+// setOptions n'existe pas dans Expo Go (warning sinon) — actif uniquement en build natif
+if (Constants.executionEnvironment !== ExecutionEnvironment.StoreClient) {
+  SplashScreen.setOptions({ fade: true, duration: 300 });
+}
 
 function RootLayoutNav() {
   const { colors, theme } = useTheme();
@@ -106,6 +110,10 @@ function RootLayoutNav() {
         <Stack.Screen
           name="qibla"
           options={{ title: t("qibla.title") }}
+        />
+        <Stack.Screen
+          name="stats"
+          options={{ title: t("stats.title") }}
         />
       </Stack>
       {showSplash && <AnimatedSplash onFinish={() => setShowSplash(false)} />}

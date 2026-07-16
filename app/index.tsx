@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Pressable,
   Animated,
+  Easing,
   ImageBackground,
   ScrollView,
 } from "react-native";
@@ -20,13 +21,82 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useTranslation } from "../contexts/TranslationContext";
 import { useSettings } from "../hooks/useSettings";
 import { useStats } from "../contexts/StatsContext";
-import { usePrayerTimes, PRAYER_LABEL_KEYS } from "../hooks/usePrayerTimes";
+import { usePrayerTimes, PRAYER_LABEL_KEYS, type RealPrayer } from "../hooks/usePrayerTimes";
 import { useNotifications } from "../hooks/useNotifications";
 import { getTextSize } from "../utils/textSize";
 import { hadiths, quoteImages } from "../data/hadith";
 import { translations } from "../utils/translations";
 import { analytics } from "../lib/firebase";
-import { getResponsivePadding, getResponsiveMargin, getResponsiveSize, isSmallScreen } from "../utils/responsive";
+import { getResponsivePadding, getResponsiveMargin, getResponsiveSize, isSmallScreen, SCREEN_WIDTH } from "../utils/responsive";
+
+// Accès rapide : 4 tuiles pleines visibles, les suivantes se découvrent en scrollant
+const QUICK_GAP = getResponsiveSize(10);
+const QUICK_PADDING = getResponsivePadding(20);
+const QUICK_TILE_WIDTH = (SCREEN_WIDTH - QUICK_PADDING * 2 - QUICK_GAP * 3) / 4;
+
+// Ciel du widget prière : la période avant chaque prière a sa propre lumière
+type SkyTheme = {
+  gradient: [string, string, string];
+  icon: string;
+  body: {
+    size: number;
+    top?: number;
+    bottom?: number;
+    right: number;
+    core: string;
+    glow: string;
+  };
+  stars: boolean;
+};
+
+const SKY_THEMES: Record<RealPrayer, SkyTheme> = {
+  // Nuit profonde (après l'Isha) : lune et étoiles
+  Fajr: {
+    gradient: ["#0D1B3E", "#1A2C5B", "#2C4A80"],
+    icon: "moon",
+    body: { size: 52, top: 12, right: 26, core: "#F2F5F9", glow: "#BFD4F2" },
+    stars: true,
+  },
+  // Matinée : soleil doré qui monte dans un ciel bleu
+  Dhuhr: {
+    gradient: ["#3E63A8", "#6E97CB", "#E8B86B"],
+    icon: "partly-sunny",
+    body: { size: 56, bottom: 8, right: 28, core: "#FFD873", glow: "#FFC14D" },
+    stars: false,
+  },
+  // Plein jour : soleil haut et éclatant
+  Asr: {
+    gradient: ["#0E6FB8", "#2E96D8", "#5CB8E8"],
+    icon: "sunny",
+    body: { size: 60, top: 6, right: 22, core: "#FFE066", glow: "#FFD34D" },
+    stars: false,
+  },
+  // Heure dorée : le soleil descend vers l'horizon
+  Maghrib: {
+    gradient: ["#B85C1E", "#DE8038", "#F2B25C"],
+    icon: "sunny",
+    body: { size: 58, bottom: 2, right: 26, core: "#FFD873", glow: "#FFAD42" },
+    stars: false,
+  },
+  // Nuit tombée (après le Maghrib) : lune montante et étoiles
+  Isha: {
+    gradient: ["#1D1740", "#332560", "#54398A"],
+    icon: "moon",
+    body: { size: 52, top: 14, right: 26, core: "#F2F5F9", glow: "#C9B8E8" },
+    stars: true,
+  },
+};
+
+// Petites étoiles semées dans le widget (thèmes nocturnes uniquement)
+const WIDGET_STARS = [
+  { top: 14, left: "7%", size: 2.5 },
+  { top: 34, left: "16%", size: 2 },
+  { top: 10, left: "30%", size: 2 },
+  { top: 48, left: "42%", size: 2.5 },
+  { top: 24, left: "55%", size: 2 },
+  { top: 58, left: "66%", size: 2 },
+  { top: 18, left: "78%", size: 2.5 },
+] as const;
 
 type Quote = {
   id: number;
@@ -40,27 +110,13 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const { t, language } = useTranslation();
   const { settings } = useSettings();
-  const { stats, loading: statsLoading, refreshStats, getWeeklyHistory } = useStats();
+  const { stats, loading: statsLoading, refreshStats } = useStats();
   const { timings: prayerTimings, nextPrayer, countdownLabel, progressToNext } = usePrayerTimes();
   const { schedulePrayerReminders } = useNotifications();
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
-  const [weeklyHistory, setWeeklyHistory] = useState<{ date: string; count: number }[]>([]);
   const [heroQuote, setHeroQuote] = useState<Quote | null>(null);
   const [dailyHadiths, setDailyHadiths] = useState<Quote[]>([]);
-
-  // Animations en cascade des barres d'historique hebdomadaire
-  const historyAnims = useRef(Array.from({ length: 7 }, () => new Animated.Value(0))).current;
-  useEffect(() => {
-    if (weeklyHistory.length > 0) {
-      Animated.stagger(
-        60,
-        historyAnims.map((anim) =>
-          Animated.spring(anim, { toValue: 1, tension: 50, friction: 7, useNativeDriver: true })
-        )
-      ).start();
-    }
-  }, [weeklyHistory]);
 
   // Animations refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -97,6 +153,30 @@ export default function HomeScreen() {
       useNativeDriver: false,
     }).start();
   }, [progressToNext]);
+
+  // Ciel du widget selon la prochaine prière + pulsation douce du soleil/de la lune
+  const sky = SKY_THEMES[nextPrayer ?? "Fajr"];
+  const sunGlowAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(sunGlowAnim, {
+          toValue: 1,
+          duration: 2400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(sunGlowAnim, {
+          toValue: 0,
+          duration: 2400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
 
   const styles = useMemo(() => createStyles(colors, settings.textSize), [colors, settings.textSize]);
 
@@ -145,7 +225,6 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       refreshStats();
-      getWeeklyHistory().then(setWeeklyHistory);
       if (analytics && analytics.logEvent) {
         analytics.logEvent("open_home");
       }
@@ -155,7 +234,7 @@ export default function HomeScreen() {
         setHeroQuote(shuffled[0]);
         setDailyHadiths(shuffled.slice(1, 4));
       }
-    }, [refreshStats, getWeeklyHistory, quotes])
+    }, [refreshStats, quotes])
   );
 
   // Reprogrammer les rappels de prière dès que de nouveaux horaires arrivent
@@ -328,19 +407,22 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </Modal>
 
-        {/* EN-TÊTE SALUTATION */}
-        <Animated.View
-          style={[
-            styles.header,
-            {
-              opacity: fadeAnim,
-              transform: [{ scale: titleScale }],
-            },
-          ]}
-        >
-          <Text style={styles.greeting}>{t("home.greeting")}</Text>
-          <Text style={styles.dateLine}>{dateLabel}</Text>
-        </Animated.View>
+        {/* EN-TÊTE SALUTATION (uniquement si le widget prière n'est pas affiché,
+            sinon la salutation vit dans le widget) */}
+        {!(nextPrayer && prayerTimings) && (
+          <Animated.View
+            style={[
+              styles.header,
+              {
+                opacity: fadeAnim,
+                transform: [{ scale: titleScale }],
+              },
+            ]}
+          >
+            <Text style={styles.greeting}>{t("home.greeting")}</Text>
+            <Text style={styles.dateLine}>{dateLabel}</Text>
+          </Animated.View>
+        )}
 
         {/* PROCHAINE PRIÈRE */}
         {nextPrayer && prayerTimings && (
@@ -383,30 +465,125 @@ export default function HomeScreen() {
               }
             >
               <LinearGradient
-                colors={[colors.accent, colors.accent + "D9"]}
+                colors={sky.gradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={styles.prayerWidget}
+                style={[styles.prayerWidget, { shadowColor: sky.gradient[1] }]}
               >
+                {/* Ciel décoratif : étoiles + soleil/lune selon le moment */}
+                <View style={styles.skyDecor} pointerEvents="none">
+                  {sky.stars &&
+                    WIDGET_STARS.map((star, index) => (
+                      <Animated.View
+                        key={index}
+                        style={[
+                          styles.star,
+                          {
+                            top: star.top,
+                            left: star.left,
+                            width: star.size,
+                            height: star.size,
+                            borderRadius: star.size / 2,
+                            opacity: sunGlowAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: index % 2 === 0 ? [0.9, 0.35] : [0.35, 0.9],
+                            }),
+                          },
+                        ]}
+                      />
+                    ))}
+
+                  <View
+                    style={[
+                      styles.celestialZone,
+                      {
+                        width: sky.body.size * 2,
+                        height: sky.body.size * 2,
+                        right: sky.body.right,
+                        ...(sky.body.top != null ? { top: sky.body.top } : {}),
+                        ...(sky.body.bottom != null ? { bottom: sky.body.bottom } : {}),
+                      },
+                    ]}
+                  >
+                    <Animated.View
+                      style={[
+                        styles.celestialCircle,
+                        {
+                          width: sky.body.size * 2,
+                          height: sky.body.size * 2,
+                          borderRadius: sky.body.size,
+                          backgroundColor: sky.body.glow,
+                          opacity: sunGlowAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.16, 0.28],
+                          }),
+                          transform: [
+                            {
+                              scale: sunGlowAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [1, 1.12],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    />
+                    <Animated.View
+                      style={[
+                        styles.celestialCircle,
+                        {
+                          width: sky.body.size * 1.4,
+                          height: sky.body.size * 1.4,
+                          borderRadius: sky.body.size * 0.7,
+                          backgroundColor: sky.body.glow,
+                          opacity: sunGlowAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.28, 0.42],
+                          }),
+                        },
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.celestialCircle,
+                        {
+                          width: sky.body.size,
+                          height: sky.body.size,
+                          borderRadius: sky.body.size / 2,
+                          backgroundColor: sky.body.core,
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
+
+                {/* SALUTATION */}
+                <View style={styles.prayerWidgetGreetingBlock}>
+                  <Text style={styles.prayerWidgetGreeting}>{t("home.greeting")}</Text>
+                  <Text style={styles.prayerWidgetDate}>{dateLabel}</Text>
+                </View>
+
                 <View style={styles.prayerWidgetTop}>
                   <View style={styles.prayerWidgetIcon}>
-                    <Ionicons name="moon" size={16} color="#FFFFFF" />
+                    <Ionicons name={sky.icon as any} size={16} color="#FFFFFF" />
                   </View>
                   <Text style={styles.prayerWidgetLabel}>
                     {t("prayerTimes.nextPrayer")}
                   </Text>
-                  <View style={styles.prayerWidgetTimeChip}>
-                    <Ionicons name="time-outline" size={13} color="#FFFFFF" />
-                    <Text style={styles.prayerWidgetTimeChipText}>
-                      {prayerTimings[nextPrayer]}
-                    </Text>
-                  </View>
                 </View>
 
                 <View style={styles.prayerWidgetMain}>
-                  <Text style={styles.prayerWidgetName}>
-                    {t(`prayerTimes.${PRAYER_LABEL_KEYS[nextPrayer]}`)}
-                  </Text>
+                  <View style={styles.prayerWidgetNameBlock}>
+                    <Text style={styles.prayerWidgetName}>
+                      {t(`prayerTimes.${PRAYER_LABEL_KEYS[nextPrayer]}`)}
+                    </Text>
+                    <View style={styles.prayerWidgetTimeChip}>
+                      <Ionicons name="time-outline" size={13} color="#FFFFFF" />
+                      <Text style={styles.prayerWidgetTimeChipText}>
+                        {prayerTimings[nextPrayer]}
+                      </Text>
+                    </View>
+                  </View>
                   <View style={styles.prayerWidgetCountdownBlock}>
                     <Text style={styles.prayerWidgetCountdown}>{countdownLabel}</Text>
                     <Text style={styles.prayerWidgetCountdownHint}>
@@ -461,74 +638,50 @@ export default function HomeScreen() {
           </Animated.View>
         )}
 
-        {/* SECTION STATISTIQUES */}
+        {/* SECTION STATISTIQUES (touche une carte pour ouvrir l'historique) */}
         <Animated.View style={[styles.statsSection, { opacity: fadeAnim }]}>
-          <View style={styles.statCard}>
+          <Pressable
+            style={styles.statCard}
+            onPress={() => {
+              if (analytics && analytics.logEvent) {
+                analytics.logEvent("navigate_to_stats");
+              }
+              router.push("/stats");
+            }}
+            android_ripple={{ color: colors.accent + "20" }}
+          >
             <Ionicons name="flame" size={32} color="#FF6B6B" />
             <Text style={styles.statNumber}>{statsLoading ? "..." : stats.streakDays}</Text>
             <Text style={styles.statLabel}>{t("home.streakDays")}</Text>
-          </View>
+            <Ionicons
+              name="chevron-forward"
+              size={14}
+              color={colors.textSecondary}
+              style={styles.statCardChevron}
+            />
+          </Pressable>
 
-          <View style={styles.statCard}>
+          <Pressable
+            style={styles.statCard}
+            onPress={() => {
+              if (analytics && analytics.logEvent) {
+                analytics.logEvent("navigate_to_stats");
+              }
+              router.push("/stats");
+            }}
+            android_ripple={{ color: colors.accent + "20" }}
+          >
             <Ionicons name="checkmark-circle" size={32} color="#4ECDC4" />
             <Text style={styles.statNumber}>{statsLoading ? "..." : stats.completedAdkar}</Text>
             <Text style={styles.statLabel}>{t("home.completedAdkar")}</Text>
-          </View>
+            <Ionicons
+              name="chevron-forward"
+              size={14}
+              color={colors.textSecondary}
+              style={styles.statCardChevron}
+            />
+          </Pressable>
         </Animated.View>
-
-        {/* HISTORIQUE DE LA SEMAINE */}
-        {weeklyHistory.length > 0 && (
-          <View style={styles.weeklySection}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="calendar" size={22} color={colors.accent} />
-              <Text style={styles.sectionTitle}>{t("home.weeklyHistory")}</Text>
-            </View>
-            <View style={styles.weeklyRow}>
-              {weeklyHistory.map((day, index) => {
-                const ratio = day.count / 3;
-                const weekdayLabel = new Date(day.date).toLocaleDateString(
-                  language === "ar" ? "ar" : language === "en" ? "en-US" : "fr-FR",
-                  { weekday: "short" }
-                );
-                const isToday = day.date === new Date().toDateString();
-                return (
-                  <Animated.View
-                    key={day.date}
-                    style={[
-                      styles.weeklyDayColumn,
-                      {
-                        opacity: historyAnims[index],
-                        transform: [
-                          {
-                            translateY: historyAnims[index].interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [16, 0],
-                            }),
-                          },
-                        ],
-                      },
-                    ]}
-                  >
-                    <View style={styles.weeklyBarTrack}>
-                      <View
-                        style={[
-                          styles.weeklyBarFill,
-                          {
-                            height: `${Math.max(ratio * 100, day.count > 0 ? 12 : 0)}%`,
-                            backgroundColor: day.count > 0 ? colors.accent : colors.border,
-                          },
-                        ]}
-                      />
-                    </View>
-                    <Text style={[styles.weeklyDayLabel, isToday && styles.weeklyDayLabelToday]}>
-                      {weekdayLabel}
-                    </Text>
-                  </Animated.View>
-                );
-              })}
-            </View>
-          </View>
-        )}
 
         {/* ACCÈS RAPIDE */}
         <View style={styles.quickAccessSection}>
@@ -537,7 +690,12 @@ export default function HomeScreen() {
             <Text style={styles.sectionTitle}>{t("home.quickAccess")}</Text>
           </View>
 
-          <View style={styles.quickAccessRow}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.quickAccessScroll}
+            contentContainerStyle={styles.quickAccessRow}
+          >
             <Animated.View
               style={[
                 styles.quickAccessItem,
@@ -637,7 +795,7 @@ export default function HomeScreen() {
                 }}
               />
             </Animated.View>
-          </View>
+          </ScrollView>
         </View>
 
         {/* SECTION HADITHS RAPIDES */}
@@ -721,6 +879,7 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     borderRadius: getResponsiveSize(18),
     padding: getResponsivePadding(16),
     marginBottom: getResponsiveMargin(16),
+    overflow: "hidden",
     elevation: 6,
     shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 4 },
@@ -728,10 +887,51 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     shadowRadius: 10,
   },
 
+  // Ciel décoratif du widget (étoiles + soleil/lune)
+  skyDecor: {
+    ...StyleSheet.absoluteFillObject,
+  },
+
+  star: {
+    position: "absolute",
+    backgroundColor: "#FFFFFF",
+  },
+
+  celestialZone: {
+    position: "absolute",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  celestialCircle: {
+    position: "absolute",
+  },
+
+  prayerWidgetGreetingBlock: {
+    marginBottom: getResponsiveMargin(14),
+    paddingRight: 76, // laisse la place au soleil/à la lune à droite
+  },
+
+  prayerWidgetGreeting: {
+    fontSize: getTextSize(19, textSize),
+    color: "#FFFFFF",
+    fontWeight: "800",
+    letterSpacing: 0.3,
+  },
+
+  prayerWidgetDate: {
+    fontSize: getTextSize(12, textSize),
+    color: "rgba(255,255,255,0.85)",
+    marginTop: 2,
+    textTransform: "capitalize",
+    letterSpacing: 0.2,
+  },
+
   prayerWidgetTop: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+    paddingRight: 64, // le coin droit est réservé au soleil/à la lune
   },
 
   prayerWidgetIcon: {
@@ -777,8 +977,13 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     gap: 12,
   },
 
-  prayerWidgetName: {
+  prayerWidgetNameBlock: {
     flex: 1,
+    alignItems: "flex-start",
+    gap: 6,
+  },
+
+  prayerWidgetName: {
     fontSize: getTextSize(24, textSize),
     color: "#FFFFFF",
     fontWeight: "800",
@@ -917,55 +1122,11 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     textAlign: "center",
   },
 
-  // HISTORIQUE DE LA SEMAINE
-  weeklySection: {
-    marginBottom: getResponsiveMargin(20),
-  },
-
-  weeklyRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: colors.card,
-    borderRadius: getResponsiveSize(16),
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: getResponsivePadding(16),
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-
-  weeklyDayColumn: {
-    alignItems: "center",
-    gap: 6,
-    flex: 1,
-  },
-
-  weeklyBarTrack: {
-    width: 10,
-    height: 56,
-    borderRadius: 5,
-    backgroundColor: colors.background,
-    justifyContent: "flex-end",
-    overflow: "hidden",
-  },
-
-  weeklyBarFill: {
-    width: "100%",
-    borderRadius: 5,
-  },
-
-  weeklyDayLabel: {
-    fontSize: getTextSize(11, textSize),
-    color: colors.textSecondary,
-    textTransform: "capitalize",
-  },
-
-  weeklyDayLabelToday: {
-    color: colors.accent,
-    fontWeight: "700",
+  statCardChevron: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    opacity: 0.6,
   },
 
   // ACCÈS RAPIDE
@@ -973,13 +1134,19 @@ const createStyles = (colors: any, textSize: any) => StyleSheet.create({
     marginBottom: getResponsiveMargin(24),
   },
 
+  // Le scroll déborde du padding du container pour glisser bord à bord
+  quickAccessScroll: {
+    marginHorizontal: -QUICK_PADDING,
+  },
+
   quickAccessRow: {
     flexDirection: "row",
-    gap: getResponsiveSize(8),
+    gap: QUICK_GAP,
+    paddingHorizontal: QUICK_PADDING,
   },
 
   quickAccessItem: {
-    flex: 1,
+    width: QUICK_TILE_WIDTH,
   },
 
   // SECTION HADITHS

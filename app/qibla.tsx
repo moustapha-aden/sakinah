@@ -546,6 +546,11 @@ const createStyles = (colors: any, textSize: any) =>
       fontStyle: "italic",
     },
 
+    loadingText: {
+      fontSize: getTextSize(14, textSize),
+      color: colors.textSecondary,
+    },
+
     errorTitle: {
       fontSize: getTextSize(18, textSize),
       fontWeight: "700",

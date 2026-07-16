@@ -13,7 +13,7 @@ import {
 import { useMemo, useState, useRef, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-// import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
+import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import {
   usePrayerTimes,
   DISPLAY_PRAYERS,
@@ -85,18 +85,18 @@ export default function PrayerTimesScreen() {
 
   // Extrait sonore de secours (voir assets/audio/README.md) : à remplacer par un vrai
   // enregistrement d'adhan avant publication.
-  // const adhanPlayer = useAudioPlayer(require("../assets/audio/adhan_placeholder.wav"));
-  // const adhanStatus = useAudioPlayerStatus(adhanPlayer);
+  const adhanPlayer = useAudioPlayer(require("../assets/audio/adhan_placeholder.wav"));
+  const adhanStatus = useAudioPlayerStatus(adhanPlayer);
 
   const toggleAdhan = () => {
-    // if (adhanStatus.playing) {
-    //   adhanPlayer.pause();
-    //   adhanPlayer.seekTo(0);
-    // } else {
-    //   adhanPlayer.seekTo(0);
-    //   adhanPlayer.play();
-    // }
-    Alert.alert(t("prayerTimes.adhanPlaceholderAlertTitle"), t("prayerTimes.adhanPlaceholderAlertText"));
+    if (adhanStatus.playing) {
+      adhanPlayer.pause();
+      adhanPlayer.seekTo(0);
+    } else {
+      adhanPlayer.seekTo(0);
+      adhanPlayer.play();
+    }
+    // Alert.alert(t("prayerTimes.adhanPlaceholderAlertTitle"), t("prayerTimes.adhanPlaceholderAlertText"));
   };
 
   const showEmptyState = !timings && !loading;

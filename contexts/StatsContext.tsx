@@ -32,7 +32,7 @@ interface StatsContextType {
   recordAdkarCompletion: () => Promise<void>;
   resetStats: () => Promise<void>;
   refreshStats: () => Promise<void>;
-  getWeeklyHistory: () => Promise<DayHistory[]>;
+  getHistory: (days?: number) => Promise<DayHistory[]>;
 }
 
 const StatsContext = createContext<StatsContextType | undefined>(undefined);
@@ -217,28 +217,38 @@ export function StatsProvider({ children }: { children: ReactNode }) {
   }, [loadStats]);
 
   // Relit les clés déjà écrites par l'écran adkar/[category] pour reconstruire
-  // combien de catégories ont été complétées sur les 7 derniers jours,
+  // combien de catégories ont été complétées sur les N derniers jours,
   // sans avoir besoin d'un nouveau schéma de stockage.
-  const getWeeklyHistory = useCallback(async (): Promise<DayHistory[]> => {
+  const getHistory = useCallback(async (days: number = 7): Promise<DayHistory[]> => {
     try {
       const categoryIds = adkarCategories.map((cat) => cat.id);
-      const days: DayHistory[] = [];
 
-      for (let i = 6; i >= 0; i--) {
+      const dates: string[] = [];
+      for (let i = days - 1; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        const dateStr = date.toDateString();
-        const keys = categoryIds.map(
-          (catId) => `${COMPLETED_CATEGORIES_KEY}_${catId}_${dateStr}`
-        );
-        const entries = await AsyncStorage.multiGet(keys);
-        const count = entries.filter(([, value]) => value === "true").length;
-        days.push({ date: dateStr, count });
+        dates.push(date.toDateString());
       }
 
-      return days;
+      // Une seule lecture groupée pour tous les couples jour × catégorie
+      const keys = dates.flatMap((dateStr) =>
+        categoryIds.map((catId) => `${COMPLETED_CATEGORIES_KEY}_${catId}_${dateStr}`)
+      );
+      const entries = await AsyncStorage.multiGet(keys);
+      const done = new Set(
+        entries.filter(([, value]) => value === "true").map(([key]) => key)
+      );
+
+      return dates.map((dateStr) => ({
+        date: dateStr,
+        count: categoryIds.reduce(
+          (count, catId) =>
+            count + (done.has(`${COMPLETED_CATEGORIES_KEY}_${catId}_${dateStr}`) ? 1 : 0),
+          0
+        ),
+      }));
     } catch (error) {
-      console.error("Error loading weekly history:", error);
+      console.error("Error loading adkar history:", error);
       return [];
     }
   }, []);
@@ -251,7 +261,7 @@ export function StatsProvider({ children }: { children: ReactNode }) {
         recordAdkarCompletion,
         resetStats,
         refreshStats,
-        getWeeklyHistory,
+        getHistory,
       }}
     >
       {children}

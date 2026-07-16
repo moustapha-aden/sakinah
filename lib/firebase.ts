@@ -47,11 +47,14 @@ try {
       };
     }
   } catch (webError) {
-    console.warn("⚠️ Firebase Analytics not available:", webError);
-    // Créer un objet mock pour éviter les erreurs
+    // Firebase n'est pas installé : comportement normal en développement,
+    // les événements sont simplement tracés en mode simulation.
+    console.log("ℹ️ Firebase non installé — analytics en mode simulation (aucun envoi).");
     analytics = {
       logEvent: async (eventName: string, params?: any) => {
-        console.log("[Analytics Mock]", eventName, params);
+        if (__DEV__) {
+          console.log(`[Analytics] ${eventName}`, params ?? "");
+        }
       },
     };
   }
